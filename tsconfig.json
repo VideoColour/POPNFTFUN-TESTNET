@@ -6,15 +6,17 @@
       "esnext"
 	  
     ],
+    
 	"typeRoots": ["./node_modules/@types"],
 	"types": ["react"],
+  
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -42,4 +44,5 @@
   "exclude": [
     "node_modules"
   ]
+  
 }
