@@ -16,7 +16,6 @@ import {
   Th,
   Thead,
   Tr,
-  Link,
   Card,
   SimpleGrid,
   Tabs,
@@ -25,6 +24,7 @@ import {
   TabPanel,
   TabPanels,
 } from "@chakra-ui/react";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { balanceOf, getNFT as getERC1155 } from "thirdweb/extensions/erc1155";
 import { getNFT as getERC721 } from "thirdweb/extensions/erc721";
 import {
@@ -480,7 +480,7 @@ function TokenContent(props: Props) {
                   <Text fontSize="sm" color="gray.500">
                     Collection
                   </Text>
-                  <Link
+                  <ChakraNextLink
                     href={`/collection/${nftContract.chain.id}/${nftContract.address}`}
                     fontSize={{base:"xl", sm: "xl", md: "md", lg: "md", xl:"2xl"}}
                     fontWeight="bold"
@@ -491,7 +491,7 @@ function TokenContent(props: Props) {
                     _hover={{ color: "red.500", textDecoration: "none" }}
                   >
                     {contractMetadata?.name ?? "Unknown Collection"}
-                  </Link>
+                  </ChakraNextLink>
                 </Box>
               </Flex>
 
@@ -516,7 +516,7 @@ function TokenContent(props: Props) {
                       </Text>
                     )}
                   </Flex>
-                  <Link
+                  <ChakraNextLink
                     href={`https://meldscan.io/address/${nft?.owner}`}
                     fontSize={{base:"xl", sm: "xl", md: "md", lg: "md", xl:"2xl"}}
                     target="_blank"
@@ -529,7 +529,7 @@ function TokenContent(props: Props) {
                     _hover={{ color: "red.500", textDecoration: "none" }}
                   >
                     {nft?.owner ? shortenAddress(nft.owner) : "Unknown"}
-                  </Link>
+                  </ChakraNextLink>
                 </Box>
               </Flex>
             </Flex>

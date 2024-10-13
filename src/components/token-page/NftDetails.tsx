@@ -1,5 +1,5 @@
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
-import { Link } from "@chakra-ui/next-js";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { AccordionPanel, Box, Flex, Text } from "@chakra-ui/react";
 import type { NFT } from "thirdweb";
 import { shortenAddress } from "thirdweb/utils";
@@ -31,15 +31,15 @@ export function NftDetails({ nft }: Props) {
     <Box>
       <Flex direction="row" justifyContent="space-between" mb="1">
         <Text>Contract address</Text>
-        <Link color="purple" href={contractUrl} target="_blank">
+        <ChakraNextLink color="purple" href={contractUrl} target="_blank">
           {shortenAddress(nftContract.address)}
-        </Link>
+        </ChakraNextLink>
       </Flex>
       <Flex direction="row" justifyContent="space-between" mb="1">
         <Text>Token ID</Text>
-        <Link color="purple" href={tokenUrl} target="_blank">
+        <ChakraNextLink color="purple" href={tokenUrl} target="_blank">
           {nft?.id.toString()}
-        </Link>
+        </ChakraNextLink>
       </Flex>
       <Flex direction="row" justifyContent="space-between" mb="1">
         <Text>Token Standard</Text>

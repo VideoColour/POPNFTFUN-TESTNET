@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { NFT_CONTRACTS } from "@/consts/home_nft_contracts";
-import { Link } from "@chakra-ui/next-js";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { Box, Flex, Heading, Image, Text, Button, IconButton, SimpleGrid, Fade } from "@chakra-ui/react";
 import Slider from "react-slick";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
@@ -118,7 +118,7 @@ export default function Home() {
             />
             <Text fontSize="xl">
               by {" "}
-              <Link
+              <ChakraNextLink
                 href={currentNFT?.profileUrl || ""}
                 _hover={{ color: "red.500" }}
                 _focus={{ boxShadow: "none" }}
@@ -128,7 +128,7 @@ export default function Home() {
                 color="white.200"
               >
                 {currentNFT?.name || "Unknown Creator"}
-              </Link>
+              </ChakraNextLink>
             </Text>
           </Flex>
 
@@ -178,11 +178,11 @@ export default function Home() {
           )}
 
           <Flex justifyContent="center" gap={4} mt={-2}>
-            <Link href={`/collection/${currentNFT?.chain?.id || 0}/${currentNFT?.address || "#"}`}>
+            <ChakraNextLink href={`/collection/${currentNFT?.chain?.id || 0}/${currentNFT?.address || "#"}`}>
               <Button colorScheme="rgb(222, 222, 222, 0.5)" variant="outline" size="lg">
                 Open Collection
               </Button>
-            </Link>
+            </ChakraNextLink>
           </Flex>
         </Box>
 
@@ -332,7 +332,7 @@ export default function Home() {
           pb={{ base: "10px", lg: "100px" }}
         >
           {NFT_CONTRACTS.map((item, index) => (
-            <Link
+            <ChakraNextLink
               href={`/collection/${item.chain.id}/${item.address}`}
               key={index}
               borderRadius="16px"
@@ -362,7 +362,7 @@ export default function Home() {
               <Text mt="10px" fontSize={{ base: "md", md: "md", lg: "xl" }} textAlign="center" color="white">
                 {item.title}
               </Text>
-            </Link>
+            </ChakraNextLink>
           ))}
         </Flex>
       </Box>

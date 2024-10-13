@@ -2,7 +2,7 @@
 
 import { client } from "@/consts/client";
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
-import { Link } from "@chakra-ui/next-js";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import {
   Box,
   Flex,
@@ -75,7 +75,7 @@ export function ListingGrid() {
               }}
               transition="all 0.2s ease-in-out" 
             >
-              <Link
+              <ChakraNextLink
                 href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${item.asset.id.toString()}`}
                 _hover={{ 
                   textDecoration: "none", 
@@ -96,7 +96,7 @@ export function ListingGrid() {
                     {item.asset?.metadata?.name ?? "Unknown item"}
                   </Text>
                 </Flex>
-              </Link>
+              </ChakraNextLink>
 
               <Flex justifyContent="space-between" alignItems="center" w="100%" mt="2">
                 <Box textAlign="left">

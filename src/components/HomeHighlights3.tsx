@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Text, Heading, Flex, Image, Link } from "@chakra-ui/react";
+import { Box, Text, Heading, Flex, Image } from "@chakra-ui/react";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
 import { useReadContract } from "thirdweb/react";
@@ -147,7 +148,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
       <Heading mb="30px">
-        <Link
+        <ChakraNextLink
           href={`/collection/${nftContract.chain.id}/${nftContract.address}`}
           color="white"
           fontWeight="bold"
@@ -155,7 +156,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
           transition="all 0.2s ease-in-out"
         >
           {(nftContract as any).title || "Galactic Vision"}
-          </Link>
+          </ChakraNextLink>
       </Heading>
       <Box
         borderTop="1px solid"
@@ -185,14 +186,14 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 _hover={{ boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", transform: "scale(1.035)" }}
                 transition="all 0.2s ease-in-out"
               >
-                <Link href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }}>
+                <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }}>
                   <Flex direction="column" alignItems="center">
                     <Image src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} width="150%" height="190px" objectFit="cover" borderRadius="8px" />
                     <Text fontWeight="bold" fontSize="lg" mt="10px" color="white" textAlign="left">
                       {nft.metadata.name}
                     </Text>
                   </Flex>
-                </Link>
+                </ChakraNextLink>
                 <Flex justifyContent="space-between" alignItems="left" w="100%" mt="10px">
                   <Box textAlign="left">
                     <Text color="gray.300">Price</Text>

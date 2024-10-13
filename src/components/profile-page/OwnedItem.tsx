@@ -1,6 +1,7 @@
 "use client";
 import { client } from "@/consts/client";
-import { Box, Flex, Link, Text, Button } from "@chakra-ui/react";
+import { Box, Flex, Text, Button } from "@chakra-ui/react";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import type { NFT, ThirdwebContract } from "thirdweb";
 import { MediaRenderer } from "thirdweb/react";
 
@@ -20,7 +21,7 @@ export function OwnedItem({ nft, nftCollection, listings }: OwnedItemProps) {
   return (
     <Box
       rounded="12px"
-      as={Link}
+      as={ChakraNextLink}
       href={`/collection/${nftCollection.chain.id}/${nftCollection.address}/token/${nft.id.toString()}`}
       _hover={{
         textDecoration: "none",

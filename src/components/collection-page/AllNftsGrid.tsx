@@ -2,7 +2,7 @@
 
 import { client } from "@/consts/client";
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
-import { Link } from "@chakra-ui/next-js";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import {
   Box,
   Flex,
@@ -94,7 +94,7 @@ export function AllNftsGrid() {
             <Box
               key={item.id}
               rounded="12px"
-              as={Link}
+              as={ChakraNextLink}
               href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${item.id.toString()}`}
               _hover={{ 
                 textDecoration: "none", 

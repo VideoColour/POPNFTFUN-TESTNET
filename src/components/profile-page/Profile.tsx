@@ -28,7 +28,7 @@ import { getOwnedERC721s } from "@/extensions/getOwnedERC721s";
 import { OwnedItem } from "./OwnedItem";
 import { getAllValidListings } from "thirdweb/extensions/marketplace";
 import { MARKETPLACE_CONTRACTS } from "@/consts/marketplace_contract";
-import { Link } from "@chakra-ui/next-js";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { getOwnedERC1155s } from "@/extensions/getOwnedERC1155s";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { useGetENSAvatar } from "@/hooks/useGetENSAvatar";
@@ -241,7 +241,7 @@ export function ProfileSection(props: Props) {
                       <Box
                         key={item.id}
                         rounded="12px"
-                        as={Link}
+                        as={ChakraNextLink}
                         href={`/collection/${contract.chain.id}/${contract.address}/token/${item.asset.id.toString()}`}
                         _hover={{
                           textDecoration: "none",

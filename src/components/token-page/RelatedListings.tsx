@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Text, Heading, Flex, Image, Link, IconButton } from "@chakra-ui/react";
+import { Box, Text, Heading, Flex, Image, IconButton } from "@chakra-ui/react";
+import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
 import { useReadContract } from "thirdweb/react";
@@ -144,14 +145,14 @@ export default function RelatedListings({ excludedListingId }: { excludedListing
                   display="flex"
                   flexDirection="column"
                 >
-                  <Link href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
+                  <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
                       <Image src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
                     </Flex>
-                  </Link>
+                  </ChakraNextLink>
                   <Flex justifyContent="space-between" alignItems="center" w="100%" mt="auto">
                     <Box>
                       <Text color="gray.300" fontSize="sm">Price</Text>

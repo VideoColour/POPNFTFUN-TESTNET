@@ -1,7 +1,7 @@
 "use client";
 
 import { NFT_CONTRACTS } from "@/consts/nft_contracts";
-import { Link } from "@chakra-ui/next-js";
+import { ChakraNextLink } from '@/components/ChakraNextLink'
 import {
   Box,
   Flex,
@@ -26,7 +26,7 @@ export default function Home() {
             justifyContent="space-evenly"
           >
             {NFT_CONTRACTS.map((item) => (
-              <Link
+              <ChakraNextLink
                 _hover={{ 
                   textDecoration: "none", 
                   boxShadow: "0 6px 15px rgba(0, 0, 0, 0.3)",
@@ -54,7 +54,7 @@ export default function Home() {
                 <Text fontSize="large" mt="10px" textAlign="center">
                   {item.title}
                 </Text>
-              </Link>
+              </ChakraNextLink>
             ))}
           </Flex>
         </Flex>
