@@ -1,5 +1,5 @@
-import { Token } from "@/components/token-page/TokenPage";
-import { useRouter } from "next/router";
+import { Token } from "@/components/token-page/TokenPage.js";
+import { useRouter } from "next/router.js";
 import { ThirdwebProvider } from "thirdweb/react";
 
 export default function TokenPage() {

@@ -4,6 +4,9 @@ const nextConfig = {
   images: {
     domains: ['4cs.gia.edu'],
   },
+  experimental: {
+    esmExternals: true,
+  },
 }
 
 module.exports = nextConfig
