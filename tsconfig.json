@@ -8,7 +8,7 @@
     ],
     
 	"typeRoots": ["./node_modules/@types"],
-	"types": ["react"],
+  "types": ["node", "react", "next"],
   
     "allowJs": true,
     "skipLibCheck": true,
