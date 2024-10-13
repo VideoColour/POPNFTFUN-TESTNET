@@ -1,0 +1,19 @@
+2024-10-12 14:03:45: == Sync Started by User Command
+2024-10-12 14:03:45: Create Folder H:/POPNFT.FUN-TESTNET/.git/objects/77
+2024-10-12 14:03:45: Create Folder H:/POPNFT.FUN-TESTNET/.git/objects/aa
+2024-10-12 14:03:45: Create Folder H:/POPNFT.FUN-TESTNET/.git/objects/ed
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/COMMIT_EDITMSG' -> 'H:/POPNFT.FUN-TESTNET/.git/COMMIT_EDITMSG' (41)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/index' -> 'H:/POPNFT.FUN-TESTNET/.git/index' (11,762)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/logs/HEAD' -> 'H:/POPNFT.FUN-TESTNET/.git/logs/HEAD' (907)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/logs/refs/heads/main' -> 'H:/POPNFT.FUN-TESTNET/.git/logs/refs/heads/main' (720)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/logs/refs/remotes/origin/main' -> 'H:/POPNFT.FUN-TESTNET/.git/logs/refs/remotes/origin/main' (447)
+2024-10-12 14:03:45: Copy New 'I:/POPNFT/POPNFTFUN-TESTNET/.git/objects/5a/9cce5c38b3469643ef0bfd93a361ec7ebb8480' -> 'H:/POPNFT.FUN-TESTNET/.git/objects/5a/9cce5c38b3469643ef0bfd93a361ec7ebb8480' (286)
+2024-10-12 14:03:45: Copy New 'I:/POPNFT/POPNFTFUN-TESTNET/.git/objects/77/c5760eade79a8bbe3a48650959578d1bc9236a' -> 'H:/POPNFT.FUN-TESTNET/.git/objects/77/c5760eade79a8bbe3a48650959578d1bc9236a' (132)
+2024-10-12 14:03:45: Copy New 'I:/POPNFT/POPNFTFUN-TESTNET/.git/objects/aa/994b99520d42a7522168cb67da04ad0e694e9a' -> 'H:/POPNFT.FUN-TESTNET/.git/objects/aa/994b99520d42a7522168cb67da04ad0e694e9a' (128)
+2024-10-12 14:03:45: Copy New 'I:/POPNFT/POPNFTFUN-TESTNET/.git/objects/d2/9ec1fc510fcd8121309e35998b955a4ee7f487' -> 'H:/POPNFT.FUN-TESTNET/.git/objects/d2/9ec1fc510fcd8121309e35998b955a4ee7f487' (659)
+2024-10-12 14:03:45: Copy New 'I:/POPNFT/POPNFTFUN-TESTNET/.git/objects/ed/8dda2c4a91534ad22f1cfe44c73ba35d4691d2' -> 'H:/POPNFT.FUN-TESTNET/.git/objects/ed/8dda2c4a91534ad22f1cfe44c73ba35d4691d2' (180)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/refs/heads/main' -> 'H:/POPNFT.FUN-TESTNET/.git/refs/heads/main' (41)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/.git/refs/remotes/origin/main' -> 'H:/POPNFT.FUN-TESTNET/.git/refs/remotes/origin/main' (41)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/node_modules/@chakra-ui/next-js/dist/esm/image.mjs' -> 'H:/POPNFT.FUN-TESTNET/node_modules/@chakra-ui/next-js/dist/esm/image.mjs' (616)
+2024-10-12 14:03:45: Copy Over 'I:/POPNFT/POPNFTFUN-TESTNET/node_modules/@chakra-ui/next-js/dist/esm/link.mjs' -> 'H:/POPNFT.FUN-TESTNET/node_modules/@chakra-ui/next-js/dist/esm/link.mjs' (818)
+2024-10-12 14:03:50: == Sync Complete. Time: 00:00:05, Speed: 278.53 KB/s, OK: 17, Errors: 0
