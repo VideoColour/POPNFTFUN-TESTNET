@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
 import { fetchWithRetry, fetchNFTMetadata } from "@/utils/ipfsFetcher";
+import { ErrorBoundary } from 'react-error-boundary';
 
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
@@ -21,32 +22,26 @@ const BuyNowButton = dynamic(() =>
   }
 );
 
-const getImageUrl = async (ipfsUrl: string | undefined): Promise<string> => {
-  if (!ipfsUrl) return '/molder-01.jpg'; // Replace with your default image path
+const IPFS_GATEWAYS = [
+  'https://ipfs.io/ipfs/',
+  'https://gateway.pinata.cloud/ipfs/',
+  'https://cloudflare-ipfs.com/ipfs/',
+  // Add more gateways
+];
 
-  const gateways = [
-    'https://ipfs.io/ipfs/',
-    'https://gateway.pinata.cloud/ipfs/',
-    'https://cloudflare-ipfs.com/ipfs/',
-    // Add more gateways as needed
-  ];
-
-  if (ipfsUrl.startsWith('ipfs://')) {
-    const cid = ipfsUrl.replace('ipfs://', '');
-    for (const gateway of gateways) {
-      try {
-        const url = `${gateway}${cid}`;
-        await fetchWithRetry(url);
-        return url;
-      } catch (error) {
-        console.warn(`Failed to fetch from ${gateway}`, error);
+async function loadIPFSImage(cid: string) {
+  for (const gateway of IPFS_GATEWAYS) {
+    try {
+      const response = await fetch(`${gateway}${cid}`);
+      if (response.ok) {
+        return `${gateway}${cid}`;
       }
+    } catch (error) {
+      console.error(`Failed to load from ${gateway}`, error);
     }
   }
-
-  // If IPFS conversion fails, return the original URL or a default image
-  return ipfsUrl || '/molder-01.jpg';
-};
+  return null; // or a default image URL
+}
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
@@ -118,7 +113,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
           (listing: any) => listing.tokenId.toString() === nftId
         );
 
-        const imageUrl = await getImageUrl(nft.metadata.image);
+        const imageUrl = nft.metadata.image || '';
 
         const nftItem: NFTItem = listing
           ? {
@@ -183,6 +178,14 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     return image;
   }
 
+  function NFTImage({ nft }: { nft: NFTItem }) {
+    return (
+      <ErrorBoundary FallbackComponent={FallbackUI}>
+        <img src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
       <Heading mb="30px">
@@ -240,14 +243,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <Image 
-                        src={convertIpfsToHttp(nft.metadata.image)} 
-                        alt={nft.metadata.name} 
-                        width="100%" 
-                        height="190px" 
-                        objectFit="cover" 
-                        borderRadius="8px" 
-                      />
+                      <NFTImage nft={nft} />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
@@ -312,3 +308,14 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     </Box>
   );
 }
+
+function FallbackUI() {
+  return <div>Failed to load image</div>;
+}
+
+// In your component
+// <ErrorBoundary FallbackComponent={FallbackUI}>
+//   {nft && nft.imageUrl && nft.name && (
+//     <img src={nft.imageUrl} alt={nft.name} />
+//   )}
+// </ErrorBoundary>
