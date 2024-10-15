@@ -13,8 +13,6 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
-import { fetchWithRetry, fetchNFTMetadata } from "@/utils/ipfsFetcher";
-
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
     ssr: false,
@@ -53,6 +51,17 @@ interface HomeHighlightsProps {
   allValidListings: any[];
 }
 
+const NFT_CONTRACT = {
+  address: "0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA",
+  client: undefined,
+  chain: {
+    id: "222000222",
+    rpc: "https://222000222.rpc.thirdweb.com",
+  },
+  title: "Galactic Eyes",
+  thumbnailUrl: "https://videocolour.art/assets/img/portfolio/gifs/GALACTIC-EYE-160-web-v5.gif",
+  type: "ERC721",
+};
 
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
