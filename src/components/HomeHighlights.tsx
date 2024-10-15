@@ -20,7 +20,7 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return ''; // Return an empty string or a default image URL
+  if (!ipfsUrl) return 'default-image-url.jpg'; // Provide a default image URL
   return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 };
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
@@ -56,7 +56,7 @@ const NFT_CONTRACT = {
   client: undefined,
   chain: {
     id: "222000222",
-    rpc: "https://222000222.rpc.thirdweb.com",
+    rpc: "https://testnet-rpc.meld.com",
   },
   title: "Galactic Eyes",
   thumbnailUrl: "https://videocolour.art/assets/img/portfolio/gifs/GALACTIC-EYE-160-web-v5.gif",
@@ -88,36 +88,23 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
 
   const fetchNFTs = async () => {
     if (!allNFTs) return;
-    let mergedNfts: NFTItem[] = [];
+    const mergedNfts: NFTItem[] = allNFTs.map((nft: any) => {
+      const nftId = nft.id.toString();
+      const listing = listingsInSelectedCollection.find(
+        (listing: any) => listing.tokenId.toString() === nftId
+      );
 
-    if (listingsInSelectedCollection.length === 0) {
-      mergedNfts = allNFTs.map((nft: any) => ({
-        id: nft.id.toString(),
-        metadata: nft.metadata,
-        asset: { id: nft.id.toString(), metadata: nft.metadata },
-      }));
-    } else {
-      mergedNfts = allNFTs.map((nft: any) => {
-        const nftId = nft.id.toString();
-        const listing = listingsInSelectedCollection.find(
-          (listing: any) => listing.tokenId.toString() === nftId
-        );
-
-        return listing
-          ? {
-              id: nftId,
-              metadata: nft.metadata,
-              asset: { id: nftId, metadata: nft.metadata },
-              currencyValuePerToken: listing.currencyValuePerToken,
-              startTimeInSeconds: Number(listing.startTimeInSeconds), 
-            }
-          : {
-              id: nftId,
-              metadata: nft.metadata,
-              asset: { id: nftId, metadata: nft.metadata },
-            };
-      });
-    }
+      return {
+        id: nftId,
+        metadata: {
+          name: nft.metadata.name || "Unknown Name",
+          image: convertIpfsToHttp(nft.metadata.image),
+        },
+        asset: { id: nftId, metadata: nft.metadata },
+        currencyValuePerToken: listing?.currencyValuePerToken,
+        startTimeInSeconds: listing ? Number(listing.startTimeInSeconds) : undefined,
+      };
+    });
 
     mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
     setNftListings(mergedNfts);
@@ -127,12 +114,10 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     return (
       <Box mt="40px" textAlign="center" position="relative" maxWidth="2400px" marginX="auto">
         <Heading mb="40px">Galactic Vision</Heading>
-        {allNFTs ? <Text>No NFTs found in this collection</Text> : <Text></Text>}
+        {allNFTs ? <Text>No NFTs found in this collection</Text> : <Text>Loading...</Text>}
       </Box>
     );
   }
-  const maxItemsToShow = Math.min(nftListings.length, 7);
-
 
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
@@ -191,7 +176,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <Image src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
+                      <Image src={nft.metadata.image} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
@@ -210,15 +195,11 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                         </Text>
                       )}
                     </Box>
-                    {listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString()) && (
-                      <Box>
-                        {account && (
-                          <BuyNowButton
-                            listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
-                            account={account}
-                          />
-                        )}
-                      </Box>
+                    {account && (
+                      <BuyNowButton
+                        listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
+                        account={account}
+                      />
                     )}
                   </Flex>
                 </Box>

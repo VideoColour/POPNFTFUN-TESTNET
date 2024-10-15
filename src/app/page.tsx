@@ -141,8 +141,8 @@ export default function Home() {
             whiteSpace="normal"
             display="-webkit-box"
             sx={{
-              "-webkit-line-clamp": isExpanded ? "none" : "2",
-              "-webkit-box-orient": "vertical",
+              WebkitLineClamp: isExpanded ? "none" : "2",
+              WebkitBoxOrient: "vertical",
               lineHeight: "1.5",
               maxHeight: isExpanded ? "none" : "3em",
               minHeight: "3.2em",

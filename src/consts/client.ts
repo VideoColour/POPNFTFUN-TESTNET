@@ -3,7 +3,7 @@ import { createThirdwebClient } from "thirdweb";
 const meldTestnet = {
   name: "Meld Testnet",
   chainId: 222000222, 
-  rpc: ["https://subnets.avax.network/meld/testnet/rpc"],
+  rpc: ["https://testnet-rpc.meld.com"],
   nativeCurrency: {
     name: "MELD",
     symbol: "MELD",
