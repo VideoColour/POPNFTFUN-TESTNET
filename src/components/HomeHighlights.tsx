@@ -93,8 +93,8 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     if (listingsInSelectedCollection.length === 0) {
       mergedNfts = allNFTs.map((nft: any) => ({
         id: nft.id.toString(),
-        metadata: nft.metadata,
-        asset: { id: nft.id.toString(), metadata: nft.metadata },
+        metadata: nft.metadata || { name: `NFT #${nft.id}`, image: '' },
+        asset: { id: nft.id.toString(), metadata: nft.metadata || { name: `NFT #${nft.id}`, image: '' } },
       }));
     } else {
       mergedNfts = allNFTs.map((nft: any) => {
@@ -106,15 +106,15 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         return listing
           ? {
               id: nftId,
-              metadata: nft.metadata,
-              asset: { id: nftId, metadata: nft.metadata },
+              metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' },
+              asset: { id: nftId, metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' } },
               currencyValuePerToken: listing.currencyValuePerToken,
               startTimeInSeconds: Number(listing.startTimeInSeconds), 
             }
           : {
               id: nftId,
-              metadata: nft.metadata,
-              asset: { id: nftId, metadata: nft.metadata },
+              metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' },
+              asset: { id: nftId, metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' } },
             };
       });
     }
@@ -191,9 +191,16 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <Image src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
+                      <Image 
+                        src={convertIpfsToHttp(nft.metadata.image) || 'https://via.placeholder.com/190x190?text=Image+Not+Available'} 
+                        alt={nft.metadata.name || `NFT #${nft.id}`} 
+                        width="100%" 
+                        height="190px" 
+                        objectFit="cover" 
+                        borderRadius="8px" 
+                      />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
-                        {nft.metadata.name}
+                        {nft.metadata.name || `NFT #${nft.id}`}
                       </Text>
                     </Flex>
                   </ChakraNextLink>
