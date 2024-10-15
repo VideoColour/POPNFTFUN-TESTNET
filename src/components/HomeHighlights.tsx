@@ -83,7 +83,6 @@ const NFT_CONTRACT = {
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
   const [nftListings, setNftListings] = useState<NFTItem[]>([]);
-  const [placeholderImage, setPlaceholderImage] = useState<string | null>(null);
   const account = useActiveAccount(); 
   const carouselRef = useRef<any>(null); 
   const swiperRef = useRef<any>();
@@ -102,32 +101,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
 
   useEffect(() => {
     fetchNFTs();
-    loadTestImage();
   }, [allNFTs, listingsInSelectedCollection, nftContract]);
-
-  const loadTestImage = async () => {
-    try {
-      const imageUrl = await loadImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0bdc.gif');
-      // You can use this imageUrl if needed, or remove if not necessary for your component
-    } catch (error) {
-      console.error('Error loading IPFS image:', error);
-      setPlaceholderImage('/Molder-01.jpg');
-    }
-  };
-
-  const loadImage = async (cid: string, filename: string) => {
-    try {
-      const response = await fetch(`/api/ipfs-proxy?cid=${cid}&filename=${filename}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    } catch (error) {
-      console.error('Error loading IPFS image:', error);
-      throw error;
-    }
-  };
 
   const fetchNFTs = async () => {
     if (!allNFTs) return;
@@ -310,54 +284,6 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
           />
         </Box>
       </Box>
-      {placeholderImage && (
-        <Box mt={4}>
-          <Image
-            src={placeholderImage}
-            alt="Placeholder Image"
-            fallbackSrc="/Molder-01.jpg"
-          />
-        </Box>
-      )}
     </Box>
   );
-}
-
-const loadImage = async (cid: string, filename: string) => {
-  try {
-    const response = await fetch(`/api/ipfs-proxy?cid=${cid}&filename=${filename}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch (error) {
-    console.error('Error loading IPFS image:', error);
-    throw error;
-  }
-};
-
-// Usage
-loadImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0bdc.gif')
-  .then((imageUrl: string) => {
-    const img = new Image();
-    img.src = imageUrl;
-    img.onload = () => {
-      document.body.appendChild(img);
-    };
-    img.onerror = () => {
-      console.error('Error loading image');
-      showPlaceholderImage();
-    };
-  })
-  .catch(error => {
-    console.error('Error loading IPFS image:', error);
-    showPlaceholderImage();
-  });
-
-function showPlaceholderImage() {
-  const placeholderImg = new Image();
-  placeholderImg.src = '/Molder-01.jpg'; // Use your placeholder image path
-  placeholderImg.alt = 'Placeholder Image';
-  document.body.appendChild(placeholderImg);
 }
