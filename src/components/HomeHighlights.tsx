@@ -86,6 +86,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   const carouselRef = useRef<any>(null); 
   const swiperRef = useRef<any>();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo ? supplyInfo.endTokenId - supplyInfo.startTokenId + 1n : 0n;
@@ -103,8 +104,9 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     fetchNFTs();
   }, [allNFTs, listingsInSelectedCollection, nftContract]);
 
-  const fetchNFTs = async () => {
+  const fetchNFTs = async (retries = 3) => {
     setIsLoading(true);
+    setError(null);
     try {
       if (!allNFTs) return;
       const mergedNfts: NFTItem[] = allNFTs.map((nft: any) => {
@@ -129,9 +131,66 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
       setNftListings(mergedNfts);
     } catch (error) {
       console.error("Error fetching NFTs:", error);
+      if (retries > 0) {
+        console.log(`Retrying... (${retries} attempts left)`);
+        setTimeout(() => fetchNFTs(retries - 1), 1000);
+      } else {
+        setError("Failed to fetch NFTs. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const useCachedNFTs = (nfts: NFTItem[]) => {
+    const [cachedNFTs, setCachedNFTs] = useState<NFTItem[]>([]);
+
+    useEffect(() => {
+      if (nfts.length > 0) {
+        setCachedNFTs(nfts);
+      }
+    }, [nfts]);
+
+    return cachedNFTs.length > 0 ? cachedNFTs : nfts;
+  };
+
+  const cachedNFTListings = useCachedNFTs(nftListings);
+
+  const LazyLoadImage = ({ src, alt }: { src: string; alt: string }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const imgRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      if (imgRef.current) {
+        observer.observe(imgRef.current);
+      }
+
+      return () => {
+        if (imgRef.current) {
+          observer.unobserve(imgRef.current);
+        }
+      };
+    }, []);
+
+    return (
+      <div ref={imgRef}>
+        {isVisible ? (
+          <NFTImage src={src} alt={alt} />
+        ) : (
+          <Box width="100%" height="190px" bg="gray.700" borderRadius="8px" />
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -143,11 +202,19 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     );
   }
 
-  if (nftListings.length === 0) {
+  if (error) {
+    return (
+      <Box mt="40px" textAlign="center">
+        <Text color="red.500">{error}</Text>
+      </Box>
+    );
+  }
+
+  if (cachedNFTListings.length === 0) {
     return (
       <Box mt="40px" textAlign="center" position="relative" maxWidth="2400px" marginX="auto">
         <Heading mb="40px">Galactic Vision</Heading>
-        {allNFTs ? <Text>No NFTs found in this collection</Text> : <Text>Loading...</Text>}
+        <Text>No NFTs found in this collection</Text>
       </Box>
     );
   }
@@ -175,7 +242,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         pt="10px"
         position="relative"
       >
-        <Box position="relative" mx="60px"> {/* Increased margin for more space */}
+        <Box position="relative" mx="60px">
           <Swiper
             modules={[Navigation]}
             onBeforeInit={(swiper) => {
@@ -193,7 +260,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
             }}
             className="custom-swiper"
           >
-            {nftListings.map((nft, index) => (
+            {cachedNFTListings.map((nft, index) => (
               <SwiperSlide key={index}>
                 <Box
                   rounded="12px"
@@ -209,7 +276,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <NFTImage src={nft.metadata.image} alt={nft.metadata.name} />
+                      <LazyLoadImage src={nft.metadata.image} alt={nft.metadata.name} />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
