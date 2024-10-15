@@ -26,21 +26,39 @@ const IPFS_GATEWAYS = [
   'https://ipfs.io/ipfs/',
   'https://gateway.pinata.cloud/ipfs/',
   'https://cloudflare-ipfs.com/ipfs/',
-  // Add more gateways
+  'https://gateway.ipfs.io/ipfs/',
+  'https://ipfs.infura.io/ipfs/',
 ];
 
+const ipfsCache = new Map<string, string>();
+
 async function loadIPFSImage(cid: string) {
+  if (ipfsCache.has(cid)) {
+    return ipfsCache.get(cid);
+  }
+
   for (const gateway of IPFS_GATEWAYS) {
     try {
       const response = await fetch(`${gateway}${cid}`);
       if (response.ok) {
-        return `${gateway}${cid}`;
+        const url = `${gateway}${cid}`;
+        ipfsCache.set(cid, url);
+        return url;
       }
     } catch (error) {
       console.error(`Failed to load from ${gateway}`, error);
     }
   }
-  return null; // or a default image URL
+  return null;
+}
+
+async function convertIpfsToHttp(image: string): Promise<string> {
+  if (image.startsWith('ipfs://')) {
+    const cid = image.slice(7);
+    const httpUrl = await loadIPFSImage(cid);
+    return httpUrl || image;
+  }
+  return image;
 }
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
@@ -171,17 +189,41 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }
   const maxItemsToShow = Math.min(nftListings.length, 7);
 
-  function convertIpfsToHttp(image: string): string {
-    if (image.startsWith('ipfs://')) {
-      return `https://ipfs.io/ipfs/${image.slice(7)}`;
-    }
-    return image;
-  }
-
   function NFTImage({ nft }: { nft: NFTItem }) {
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
+
+    useEffect(() => {
+      const loadImage = async () => {
+        try {
+          setIsLoading(true);
+          const convertedUrl = await convertIpfsToHttp(nft.metadata.image);
+          setImageUrl(convertedUrl);
+        } catch (err) {
+          setError(err instanceof Error ? err : new Error('Failed to load image'));
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadImage();
+    }, [nft.metadata.image]);
+
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
+
     return (
       <ErrorBoundary FallbackComponent={FallbackUI}>
-        <img src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} />
+        {imageUrl && (
+          <Image
+            src={imageUrl}
+            alt={nft.metadata.name}
+            objectFit="cover"
+            width="100%"
+            height="200px"
+            fallback={<FallbackUI />}
+          />
+        )}
       </ErrorBoundary>
     );
   }
