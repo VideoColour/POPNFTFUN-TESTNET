@@ -33,7 +33,7 @@ yarn-error.log*
 .env*.local
 .env
 .phylum_project
-
+.env.local
 # vercel
 .vercel
 

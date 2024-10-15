@@ -1,25 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-
-const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return ''; // Return an empty string or a default image URL
-  return ipfsUrl.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
-};
+import axios from 'axios'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { cid } = req.query
-  if (!cid || typeof cid !== 'string') {
-    return res.status(400).json({ error: 'Invalid CID' })
+  const { cid, filename } = req.query;
+
+  if (!cid || !filename) {
+    return res.status(400).json({ error: 'Missing CID or filename' });
   }
 
   try {
-    const response = await fetch(`https://ipfs.io/ipfs/${cid}`)
-    if (!response.ok) {
-      throw new Error(`IPFS gateway responded with status: ${response.status}`)
-    }
-    const data = await response.json()
-    res.status(200).json(data)
+    const response = await axios.get(`https://amethyst-total-sole-31.mypinata.cloud/ipfs/${cid}/${filename}`, {
+      responseType: 'arraybuffer',
+      headers: {
+        'Authorization': `Bearer ${process.env.PINATA_JWT}`
+      }
+    });
+
+    res.setHeader('Content-Type', response.headers['content-type']);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.status(200).send(response.data);
   } catch (error) {
-    console.error('Error fetching IPFS data:', error)
-    res.status(500).json({ error: 'Failed to fetch IPFS data' })
+    console.error('IPFS proxy error:', error);
+    return res.status(500).json({ error: 'Error fetching from IPFS' });
   }
 }

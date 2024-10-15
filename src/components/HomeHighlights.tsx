@@ -13,18 +13,33 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
+import GifImage from '@/components/GifImage';
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
     ssr: false,
   }
 );
 
+const PINATA_GATEWAY = "https://amethyst-total-sole-31.mypinata.cloud";
+const PINATA_JWT = process.env.PINATA_JWT;
+
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return ''; 
-  // Use a single, reliable IPFS gateway
-  const gateway = "https://ipfs.io/ipfs/";
-  const cid = ipfsUrl.replace("ipfs://", "");
-  return `${gateway}${cid}`;
+  if (!ipfsUrl) return '/Molder-01.jpg';
+  
+  if (ipfsUrl.startsWith('http://') || ipfsUrl.startsWith('https://')) {
+    return ipfsUrl;
+  }
+  
+  if (ipfsUrl.startsWith('data:')) {
+    return ipfsUrl;
+  }
+  
+  const cid = ipfsUrl.replace('ipfs://', '');
+  const [extractedCid, ...filenameParts] = cid.split('/');
+  const filename = filenameParts.join('/');
+  
+  // Use direct Pinata gateway as fallback
+  return `https://amethyst-total-sole-31.mypinata.cloud/ipfs/${extractedCid}/${filename}`;
 };
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
@@ -43,7 +58,6 @@ const CustomArrow = ({ type, onClick, isEdge }: any) => {
     />
   );
 };
-
 interface NFTItem {
   id: string;
   metadata: { name: string; image: string };
@@ -68,13 +82,16 @@ const NFT_CONTRACT = {
   type: "ERC721",
 };
 
+const isGif = (url: string) => {
+  return url.toLowerCase().endsWith('.gif');
+};
+
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
   const [nftListings, setNftListings] = useState<NFTItem[]>([]);
   const account = useActiveAccount(); 
   const carouselRef = useRef<any>(null); 
   const swiperRef = useRef<any>();
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo ? supplyInfo.endTokenId - supplyInfo.startTokenId + 1n : 0n;
@@ -99,8 +116,8 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     if (listingsInSelectedCollection.length === 0) {
       mergedNfts = allNFTs.map((nft: any) => ({
         id: nft.id.toString(),
-        metadata: nft.metadata || { name: `NFT #${nft.id}`, image: '' },
-        asset: { id: nft.id.toString(), metadata: nft.metadata || { name: `NFT #${nft.id}`, image: '' } },
+        metadata: nft.metadata,
+        asset: { id: nft.id.toString(), metadata: nft.metadata },
       }));
     } else {
       mergedNfts = allNFTs.map((nft: any) => {
@@ -112,15 +129,15 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         return listing
           ? {
               id: nftId,
-              metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' },
-              asset: { id: nftId, metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' } },
+              metadata: nft.metadata,
+              asset: { id: nftId, metadata: nft.metadata },
               currencyValuePerToken: listing.currencyValuePerToken,
               startTimeInSeconds: Number(listing.startTimeInSeconds), 
             }
           : {
               id: nftId,
-              metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' },
-              asset: { id: nftId, metadata: nft.metadata || { name: `NFT #${nftId}`, image: '' } },
+              metadata: nft.metadata,
+              asset: { id: nftId, metadata: nft.metadata },
             };
       });
     }
@@ -197,20 +214,32 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
+                    {isGif(convertIpfsToHttp(nft.metadata.image)) ? (
+                      <GifImage
+                        src={convertIpfsToHttp(nft.metadata.image)}
+                        alt={nft.metadata.name || `NFT #${nft.id}`}
+                        width={190}
+                        height={190}
+                      />
+                    ) : (
                       <Image 
-                        src={imageErrors[nft.id] ? "/placeholder-image.png" : convertIpfsToHttp(nft.metadata.image)}
+                        src={convertIpfsToHttp(nft.metadata.image)}
                         alt={nft.metadata.name || `NFT #${nft.id}`} 
-                        width="100%" 
-                        height="190px" 
+                        width={190}
+                        height={190}
                         objectFit="cover" 
                         borderRadius="8px" 
-                        fallbackSrc="/placeholder-image.png"
-                        onError={() => {
-                          setImageErrors(prev => ({ ...prev, [nft.id]: true }));
+                        fallbackSrc="/Molder-01.jpg"
+                        onError={(e: any) => {
+                          const target = e.target as HTMLImageElement;
+                          console.error('Image load error:', target.src);
+                          target.onerror = null; // Prevent infinite loop
+                          target.src = '/Molder-01.jpg';
                         }}
                       />
+                    )}
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
-                        {nft.metadata.name || `NFT #${nft.id}`}
+                        {nft.metadata.name}
                       </Text>
                     </Flex>
                   </ChakraNextLink>
