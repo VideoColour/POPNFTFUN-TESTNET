@@ -287,3 +287,37 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     </Box>
   );
 }
+
+function loadIPFSImage(cid: string, filename: string) {
+  const url = `https://your-ipfs-proxy.com/api/ipfs-proxy?cid=${cid}&filename=${filename}`;
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      console.error(`Failed to load image: ${url}`);
+      reject(new Error('Image load failed'));
+    };
+    img.src = url;
+  });
+}
+
+// Usage
+loadIPFSImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0bdc.gif')
+  .then((img: unknown) => {
+    if (img instanceof HTMLImageElement) {
+      // Use the loaded image
+      document.body.appendChild(img);
+    } else {
+      throw new Error('Loaded image is not an HTMLImageElement');
+    }
+  })
+  .catch(error => {
+    // Handle the error, maybe show a placeholder
+    console.error('Error loading IPFS image:', error);
+    showPlaceholderImage();
+  });
+function showPlaceholderImage() {
+  throw new Error("Function not implemented.");
+}
+
