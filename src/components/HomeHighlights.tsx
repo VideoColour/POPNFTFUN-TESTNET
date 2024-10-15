@@ -20,9 +20,11 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return ''; // Return an empty string or a default image URL
-  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+  if (!ipfsUrl) return ''; 
+  // Use a different IPFS gateway that doesn't require authentication
+  return ipfsUrl.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
 };
+
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
   return (
@@ -39,6 +41,7 @@ const CustomArrow = ({ type, onClick, isEdge }: any) => {
     />
   );
 };
+
 interface NFTItem {
   id: string;
   metadata: { name: string; image: string };
@@ -198,6 +201,12 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                         height="190px" 
                         objectFit="cover" 
                         borderRadius="8px" 
+                        fallbackSrc="https://via.placeholder.com/190x190?text=Image+Not+Available"
+                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = 'https://via.placeholder.com/190x190?text=Image+Not+Available';
+                        }}
                       />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name || `NFT #${nft.id}`}
