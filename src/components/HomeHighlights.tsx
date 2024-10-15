@@ -13,7 +13,7 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
-import { fetchWithRetry, fetchNFTMetadata } from "@/utils/ipfsFetcher";
+import { fetchNFTMetadata } from "@/utils/ipfsFetcher";
 import { ErrorBoundary } from 'react-error-boundary';
 
 const BuyNowButton = dynamic(() =>
@@ -28,30 +28,63 @@ const IPFS_GATEWAYS = [
   'https://cloudflare-ipfs.com/ipfs/',
   'https://gateway.ipfs.io/ipfs/',
   'https://ipfs.infura.io/ipfs/',
+  'https://ipfs.fleek.co/ipfs/',
+  'https://ipfs.eternum.io/ipfs/',
+  'https://ipfs.io/ipfs/',
+  'https://dweb.link/ipfs/',
 ];
 
 const ipfsCache = new Map<string, string>();
 
-async function loadIPFSImage(cid: string) {
-  if (ipfsCache.has(cid)) {
-    return ipfsCache.get(cid);
+async function loadIPFSImage(url: string): Promise<string | null> {
+  if (ipfsCache.has(url)) {
+    return ipfsCache.get(url)!;
   }
 
-  for (const gateway of IPFS_GATEWAYS) {
+  if (url.startsWith('ipfs://')) {
+    const cid = url.slice(7);
+    for (const gateway of IPFS_GATEWAYS) {
+      try {
+        const response = await fetchWithRetry(`${gateway}${cid}`);
+        if (response.ok) {
+          const gatewayUrl = `${gateway}${cid}`;
+          ipfsCache.set(url, gatewayUrl);
+          return gatewayUrl;
+        }
+      } catch (error) {
+        console.error(`Failed to load from ${gateway}`, error);
+      }
+    }
+  } else if (url.startsWith('http://') || url.startsWith('https://')) {
     try {
-      const response = await fetch(`${gateway}${cid}`);
+      const response = await fetchWithRetry(url);
       if (response.ok) {
-        const url = `${gateway}${cid}`;
-        ipfsCache.set(cid, url);
+        ipfsCache.set(url, url);
         return url;
       }
     } catch (error) {
-      console.error(`Failed to load from ${gateway}`, error);
+      console.error(`Failed to load from ${url}`, error);
     }
+  } else if (url.startsWith('data:')) {
+    // Handle data URLs directly
+    return url;
   }
+
+  console.error(`Failed to load image from ${url}`);
   return null;
 }
-
+export async function fetchWithRetry(url: string, retries = 3, delay = 1000): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return response;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  throw new Error(`Failed to fetch ${url} after ${retries} retries`);
+}
 async function convertIpfsToHttp(image: string): Promise<string> {
   if (image.startsWith('ipfs://')) {
     const cid = image.slice(7);
@@ -193,13 +226,13 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
-
+  
     useEffect(() => {
       const loadImage = async () => {
         try {
           setIsLoading(true);
-          const convertedUrl = await convertIpfsToHttp(nft.metadata.image);
-          setImageUrl(convertedUrl);
+          const url = await loadIPFSImage(nft.metadata.image);
+          setImageUrl(url);
         } catch (err) {
           setError(err instanceof Error ? err : new Error('Failed to load image'));
         } finally {
@@ -208,10 +241,10 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
       };
       loadImage();
     }, [nft.metadata.image]);
-
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message}</div>;
-
+  
+    if (isLoading) return <Box height="200px" display="flex" alignItems="center" justifyContent="center">Loading...</Box>;
+    if (error) return <Box height="200px" display="flex" alignItems="center" justifyContent="center">Error: {error.message}</Box>;
+  
     return (
       <ErrorBoundary FallbackComponent={FallbackUI}>
         {imageUrl && (
@@ -221,7 +254,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
             objectFit="cover"
             width="100%"
             height="200px"
-            fallback={<FallbackUI />}
+            fallback={<FallbackUI error={new Error("Image failed to load")} />}
           />
         )}
       </ErrorBoundary>
@@ -351,8 +384,13 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   );
 }
 
-function FallbackUI() {
-  return <div>Failed to load image</div>;
+function FallbackUI({ error }: { error: Error }) {
+  return (
+    <Box height="200px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
+      <Text>Failed to load image</Text>
+      <Text fontSize="sm" color="gray.500">{error.message}</Text>
+    </Box>
+  );
 }
 
 // In your component
