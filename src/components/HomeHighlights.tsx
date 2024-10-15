@@ -13,7 +13,7 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
-import GifImage from '@/components/GifImage';
+import GifImage from './GifImage';
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
     ssr: false,
@@ -38,8 +38,7 @@ const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   const [extractedCid, ...filenameParts] = cid.split('/');
   const filename = filenameParts.join('/');
   
-  // Use direct Pinata gateway as fallback
-  return `https://amethyst-total-sole-31.mypinata.cloud/ipfs/${extractedCid}/${filename}`;
+  return `ipfs://${extractedCid}/${filename}`;
 };
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
