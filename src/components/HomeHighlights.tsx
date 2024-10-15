@@ -21,7 +21,6 @@ const BuyNowButton = dynamic(() =>
 
 const PINATA_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY;
 const PINATA_JWT = process.env.PINATA_JWT;
-
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   if (!ipfsUrl) return '/Molder-01.jpg';
   
@@ -30,7 +29,7 @@ const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   }
   
   if (ipfsUrl.startsWith('data:')) {
-    return ipfsUrl; // Return data URLs as-is
+    return ipfsUrl;
   }
   
   const cid = ipfsUrl.replace('ipfs://', '');
