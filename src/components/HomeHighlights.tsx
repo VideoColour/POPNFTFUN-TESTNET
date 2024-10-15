@@ -13,12 +13,26 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
-import GifImage from './GifImage';
+// Remove the import of GifImage as it's defined later in this file
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
     ssr: false,
   }
 );
+
+interface GifImageProps {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
+const GifImage: React.FC<GifImageProps> = ({ src, alt, width, height }) => {
+  const [cid, filename] = src.replace('ipfs://', '').split('/');
+  const proxyUrl = `/api/ipfs-proxy?cid=${encodeURIComponent(cid)}&filename=${encodeURIComponent(filename)}`;
+  
+  return <Image src={proxyUrl} alt={alt} width={width} height={height} unoptimized />;
+};
 
 const PINATA_GATEWAY = "https://amethyst-total-sole-31.mypinata.cloud";
 const PINATA_JWT = process.env.PINATA_JWT;
@@ -31,14 +45,15 @@ const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   }
   
   if (ipfsUrl.startsWith('data:')) {
-    return ipfsUrl;
+    return ipfsUrl; // Return data URLs as-is
   }
   
   const cid = ipfsUrl.replace('ipfs://', '');
   const [extractedCid, ...filenameParts] = cid.split('/');
   const filename = filenameParts.join('/');
   
-  return `ipfs://${extractedCid}/${filename}`;
+  // Use direct Pinata gateway as fallback
+  return `https://amethyst-total-sole-31.mypinata.cloud/ipfs/${extractedCid}/${filename}`;
 };
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {

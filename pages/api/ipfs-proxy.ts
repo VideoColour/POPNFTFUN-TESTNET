@@ -8,12 +8,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing CID or filename' });
   }
 
-  const url = `https://ipfs.io/ipfs/${cid}/${filename}`;
+  const url = `https://amethyst-total-sole-31.mypinata.cloud/ipfs/${cid}/${filename}`;
   console.log('Attempting to fetch:', url);
 
   try {
+    console.log('Request headers:', {
+      'Authorization': `Bearer ${process.env.PINATA_JWT}`
+    });
+
     const response = await axios.get(url, {
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
+      headers: {
+        Authorization: `Bearer ${process.env.PINATA_JWT}`,
+      },
     });
 
     console.log('Response status:', response.status);
@@ -40,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error instanceof Error) {
       return res.status(500).json({ error: 'Error fetching from IPFS', details: error.message });
     } else {
-      return res.status(500).json({ error: 'Error fetching from IPFS', details: 'Unknown error' });
+      return res.status(500).json({ error: 'Error fetching from IPFS', details: 'Unknown error occurred' });
     }
   }
 }
