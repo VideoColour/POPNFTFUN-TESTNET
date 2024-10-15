@@ -13,8 +13,7 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
-import { fetchNFTMetadata } from "@/utils/ipfsFetcher";
-import { ErrorBoundary } from 'react-error-boundary';
+import { fetchWithRetry, fetchNFTMetadata } from "@/utils/ipfsFetcher";
 
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
@@ -22,78 +21,10 @@ const BuyNowButton = dynamic(() =>
   }
 );
 
-const IPFS_GATEWAYS = [
-  'https://ipfs.io/ipfs/',
-  'https://gateway.pinata.cloud/ipfs/',
-  'https://cloudflare-ipfs.com/ipfs/',
-  'https://gateway.ipfs.io/ipfs/',
-  'https://ipfs.infura.io/ipfs/',
-  'https://ipfs.fleek.co/ipfs/',
-  'https://ipfs.eternum.io/ipfs/',
-  'https://ipfs.io/ipfs/',
-  'https://dweb.link/ipfs/',
-];
-
-const ipfsCache = new Map<string, string>();
-
-async function loadIPFSImage(url: string): Promise<string | null> {
-  if (ipfsCache.has(url)) {
-    return ipfsCache.get(url)!;
-  }
-
-  if (url.startsWith('ipfs://')) {
-    const cid = url.slice(7);
-    for (const gateway of IPFS_GATEWAYS) {
-      try {
-        const response = await fetchWithRetry(`${gateway}${cid}`);
-        if (response.ok) {
-          const gatewayUrl = `${gateway}${cid}`;
-          ipfsCache.set(url, gatewayUrl);
-          return gatewayUrl;
-        }
-      } catch (error) {
-        console.error(`Failed to load from ${gateway}`, error);
-      }
-    }
-  } else if (url.startsWith('http://') || url.startsWith('https://')) {
-    try {
-      const response = await fetchWithRetry(url);
-      if (response.ok) {
-        ipfsCache.set(url, url);
-        return url;
-      }
-    } catch (error) {
-      console.error(`Failed to load from ${url}`, error);
-    }
-  } else if (url.startsWith('data:')) {
-    // Handle data URLs directly
-    return url;
-  }
-
-  console.error(`Failed to load image from ${url}`);
-  return null;
-}
-export async function fetchWithRetry(url: string, retries = 3, delay = 1000): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) return response;
-    } catch (error) {
-      if (i === retries - 1) throw error;
-    }
-    await new Promise(resolve => setTimeout(resolve, delay));
-  }
-  throw new Error(`Failed to fetch ${url} after ${retries} retries`);
-}
-async function convertIpfsToHttp(image: string): Promise<string> {
-  if (image.startsWith('ipfs://')) {
-    const cid = image.slice(7);
-    const httpUrl = await loadIPFSImage(cid);
-    return httpUrl || image;
-  }
-  return image;
-}
-
+const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
+  if (!ipfsUrl) return ''; // Return an empty string or a default image URL
+  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+};
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
   return (
@@ -122,17 +53,6 @@ interface HomeHighlightsProps {
   allValidListings: any[];
 }
 
-const NFT_CONTRACT = {
-  address: "0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA",
-  client: undefined,
-  chain: {
-    id: "222000222",
-    rpc: "https://222000222.rpc.thirdweb.com",
-  },
-  title: "Galactic Eyes",
-  thumbnailUrl: "https://videocolour.art/assets/img/portfolio/gifs/GALACTIC-EYE-160-web-v5.gif",
-  type: "ERC721",
-};
 
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
@@ -154,63 +74,45 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   );
 
   useEffect(() => {
-    const fetchNFTs = async () => {
-      if (!allNFTs) return;
-      let mergedNfts: NFTItem[] = [];
+    fetchNFTs();
+  }, [allNFTs, listingsInSelectedCollection, nftContract]);
 
-      for (const nft of allNFTs) {
+  const fetchNFTs = async () => {
+    if (!allNFTs) return;
+    let mergedNfts: NFTItem[] = [];
+
+    if (listingsInSelectedCollection.length === 0) {
+      mergedNfts = allNFTs.map((nft: any) => ({
+        id: nft.id.toString(),
+        metadata: nft.metadata,
+        asset: { id: nft.id.toString(), metadata: nft.metadata },
+      }));
+    } else {
+      mergedNfts = allNFTs.map((nft: any) => {
         const nftId = nft.id.toString();
         const listing = listingsInSelectedCollection.find(
           (listing: any) => listing.tokenId.toString() === nftId
         );
 
-        const imageUrl = nft.metadata.image || '';
-
-        const nftItem: NFTItem = listing
+        return listing
           ? {
               id: nftId,
-              metadata: { 
-                ...nft.metadata, 
-                image: imageUrl, 
-                name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
-              },
-              asset: { 
-                id: nftId, 
-                metadata: { 
-                  ...nft.metadata, 
-                  image: imageUrl, 
-                  name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
-                } 
-              },
+              metadata: nft.metadata,
+              asset: { id: nftId, metadata: nft.metadata },
               currencyValuePerToken: listing.currencyValuePerToken,
-              startTimeInSeconds: Number(listing.startTimeInSeconds),
+              startTimeInSeconds: Number(listing.startTimeInSeconds), 
             }
           : {
               id: nftId,
-              metadata: { 
-                ...nft.metadata, 
-                image: imageUrl, 
-                name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
-              },
-              asset: { 
-                id: nftId, 
-                metadata: { 
-                  ...nft.metadata, 
-                  image: imageUrl, 
-                  name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
-                } 
-              },
+              metadata: nft.metadata,
+              asset: { id: nftId, metadata: nft.metadata },
             };
+      });
+    }
 
-        mergedNfts.push(nftItem);
-      }
-
-      mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
-      setNftListings(mergedNfts);
-    };
-
-    fetchNFTs();
-  }, [allNFTs, listingsInSelectedCollection, nftContract]);
+    mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
+    setNftListings(mergedNfts);
+  };
 
   if (nftListings.length === 0) {
     return (
@@ -222,44 +124,6 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }
   const maxItemsToShow = Math.min(nftListings.length, 7);
 
-  function NFTImage({ nft }: { nft: NFTItem }) {
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-  
-    useEffect(() => {
-      const loadImage = async () => {
-        try {
-          setIsLoading(true);
-          const url = await loadIPFSImage(nft.metadata.image);
-          setImageUrl(url);
-        } catch (err) {
-          setError(err instanceof Error ? err : new Error('Failed to load image'));
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      loadImage();
-    }, [nft.metadata.image]);
-  
-    if (isLoading) return <Box height="200px" display="flex" alignItems="center" justifyContent="center">Loading...</Box>;
-    if (error) return <Box height="200px" display="flex" alignItems="center" justifyContent="center">Error: {error.message}</Box>;
-  
-    return (
-      <ErrorBoundary FallbackComponent={FallbackUI}>
-        {imageUrl && (
-          <Image
-            src={imageUrl}
-            alt={nft.metadata.name}
-            objectFit="cover"
-            width="100%"
-            height="200px"
-            fallback={<FallbackUI error={new Error("Image failed to load")} />}
-          />
-        )}
-      </ErrorBoundary>
-    );
-  }
 
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
@@ -318,7 +182,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <NFTImage nft={nft} />
+                      <Image src={convertIpfsToHttp(nft.metadata.image)} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
@@ -383,19 +247,3 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     </Box>
   );
 }
-
-function FallbackUI({ error }: { error: Error }) {
-  return (
-    <Box height="200px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
-      <Text>Failed to load image</Text>
-      <Text fontSize="sm" color="gray.500">{error.message}</Text>
-    </Box>
-  );
-}
-
-// In your component
-// <ErrorBoundary FallbackComponent={FallbackUI}>
-//   {nft && nft.imageUrl && nft.name && (
-//     <img src={nft.imageUrl} alt={nft.name} />
-//   )}
-// </ErrorBoundary>
