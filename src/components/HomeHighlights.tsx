@@ -298,29 +298,31 @@ const loadImage = async (cid: string, filename: string) => {
     return URL.createObjectURL(blob);
   } catch (error) {
     console.error('Error loading IPFS image:', error);
-    // Provide a more user-friendly error message or fallback image
     throw error;
   }
 };
 
 // Usage
 loadImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0bdc.gif')
-  .then((img: unknown) => {
-    if (img instanceof HTMLImageElement) {
-      // Use the loaded image
+  .then((imageUrl: string) => {
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = () => {
       document.body.appendChild(img);
-    } else {
-      throw new Error('Loaded image is not an HTMLImageElement');
-    }
+    };
+    img.onerror = () => {
+      console.error('Error loading image');
+      showPlaceholderImage();
+    };
   })
   .catch(error => {
-    // Handle the error, maybe show a placeholder
     console.error('Error loading IPFS image:', error);
     showPlaceholderImage();
   });
+
 function showPlaceholderImage() {
-  throw new Error("Function not implemented.");
+  const placeholderImg = new Image();
+  placeholderImg.src = '/Molder-01.jpg'; // Use your placeholder image path
+  placeholderImg.alt = 'Placeholder Image';
+  document.body.appendChild(placeholderImg);
 }
-
-
-
