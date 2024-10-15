@@ -13,27 +13,43 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
+import { fetchWithRetry, fetchNFTMetadata } from "@/utils/ipfsFetcher";
+
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
     ssr: false,
   }
 );
 
-
-
-const IPFS_GATEWAYS = [
-  'https://ipfs.io/ipfs/',
-  'https://gateway.pinata.cloud/ipfs/',
-  'https://cloudflare-ipfs.com/ipfs/',
-  // Add more gateways here if needed
-];
-
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   if (!ipfsUrl) return ''; // Return an empty string or a default image URL
-  const ipfsHash = ipfsUrl.replace("ipfs://", "");
-  return IPFS_GATEWAYS.map(gateway => `${gateway}${ipfsHash}`);
+  if (ipfsUrl.startsWith('ipfs://')) {
+    // Use multiple IPFS gateways for better reliability
+    const gateways = [
+      'https://ipfs.io/ipfs/',
+      'https://gateway.pinata.cloud/ipfs/',
+    ];
+    const cid = ipfsUrl.slice(7);
+    return `${gateways[Math.floor(Math.random() * gateways.length)]}${cid}`;
+  }
+  return ipfsUrl; // Return the original URL if it's not an IPFS URL
 };
-
+const CustomArrow = ({ type, onClick, isEdge }: any) => {
+  const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
+  return (
+    <IconButton
+      aria-label="Arrow Button"
+      onClick={onClick}
+      isDisabled={isEdge}
+      icon={pointer}
+      bg="transparent"
+      color="gray.500" 
+      _hover={{ color: "gray.100", bg: "transparent" }} 
+      size="xl"
+      style={{ zIndex: 2 }} 
+    />
+  );
+};
 interface NFTItem {
   id: string;
   metadata: { name: string; image: string };
@@ -128,6 +144,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }
   const maxItemsToShow = Math.min(nftListings.length, 7);
 
+
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
       <Heading mb="30px">
@@ -169,58 +186,63 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
             }}
             className="custom-swiper"
           >
-            {nftListings.map((nft, index) => {
-              const imageUrl = convertIpfsToHttp(nft.metadata.image)[0]; // Use the first gateway URL
-              return (
-                <SwiperSlide key={index}>
-                  <Box
-                    rounded="12px"
-                    bg="rgb(33, 33, 33, 0.8)"
-                    border="1px solid rgb(222, 222, 222, 0.1)"
-                    p="15px"
-                    width="100%"
-                    height="340px"
-                    _hover={{ boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", transform: "scale(1.035)" }}
-                    transition="all 0.2s ease-in-out"
-                    display="flex"
-                    flexDirection="column"
-                  >
-                    <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
-                      <Flex direction="column" height="100%">
-                        <Image src={imageUrl} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
-                        <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
-                          {nft.metadata.name}
+            {nftListings.map((nft, index) => (
+              <SwiperSlide key={index}>
+                <Box
+                  rounded="12px"
+                  bg="rgb(33, 33, 33, 0.8)"
+                  border="1px solid rgb(222, 222, 222, 0.1)"
+                  p="15px"
+                  width="100%"
+                  height="340px"
+                  _hover={{ boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", transform: "scale(1.035)" }}
+                  transition="all 0.2s ease-in-out"
+                  display="flex"
+                  flexDirection="column"
+                >
+                  <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
+                    <Flex direction="column" height="100%">
+                      <Image 
+                        src={convertIpfsToHttp(nft.metadata.image)} 
+                        alt={nft.metadata.name} 
+                        width="100%" 
+                        height="190px" 
+                        objectFit="cover" 
+                        borderRadius="8px" 
+                        fallbackSrc="/Molder-01.jpg" // Add a fallback image
+                      />
+                      <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
+                        {nft.metadata.name}
+                      </Text>
+                    </Flex>
+                  </ChakraNextLink>
+                  <Flex justifyContent="space-between" alignItems="center" w="100%" mt="auto">
+                    <Box>
+                      <Text color="gray.300" fontSize="sm">Price</Text>
+                      {nft.currencyValuePerToken ? (
+                        <Text fontWeight="bold" fontSize="md" color="white">
+                          {nft.currencyValuePerToken.displayValue} {nft.currencyValuePerToken.symbol === "ETH" ? "MELD" : nft.currencyValuePerToken.symbol}
                         </Text>
-                      </Flex>
-                    </ChakraNextLink>
-                    <Flex justifyContent="space-between" alignItems="center" w="100%" mt="auto">
+                      ) : (
+                        <Text fontWeight="bold" fontSize="md" color="gray.500">
+                          Not Listed
+                        </Text>
+                      )}
+                    </Box>
+                    {listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString()) && (
                       <Box>
-                        <Text color="gray.300" fontSize="sm">Price</Text>
-                        {nft.currencyValuePerToken ? (
-                          <Text fontWeight="bold" fontSize="md" color="white">
-                            {nft.currencyValuePerToken.displayValue} {nft.currencyValuePerToken.symbol === "ETH" ? "MELD" : nft.currencyValuePerToken.symbol}
-                          </Text>
-                        ) : (
-                          <Text fontWeight="bold" fontSize="md" color="gray.500">
-                            Not Listed
-                          </Text>
+                        {account && (
+                          <BuyNowButton
+                            listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
+                            account={account}
+                          />
                         )}
                       </Box>
-                      {listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString()) && (
-                        <Box>
-                          {account && (
-                            <BuyNowButton
-                              listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
-                              account={account}
-                            />
-                          )}
-                        </Box>
-                      )}
-                    </Flex>
-                  </Box>
-                </SwiperSlide>
-              );
-            })}
+                    )}
+                  </Flex>
+                </Box>
+              </SwiperSlide>
+            ))}
           </Swiper>
           <IconButton
             aria-label="Previous"
