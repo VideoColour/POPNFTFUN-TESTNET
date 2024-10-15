@@ -20,9 +20,17 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return 'default-image-url.jpg'; // Provide a default image URL
-  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+  if (!ipfsUrl) return '/default-image.jpg'; // Update this to a valid local image path
+  // Try multiple IPFS gateways
+  const gateways = [
+    "https://ipfs.io/ipfs/",
+    "https://gateway.pinata.cloud/ipfs/",
+    "https://cloudflare-ipfs.com/ipfs/"
+  ];
+  const cid = ipfsUrl.replace("ipfs://", "");
+  return gateways.map(gateway => `${gateway}${cid}`);
 };
+
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
   return (
@@ -39,10 +47,11 @@ const CustomArrow = ({ type, onClick, isEdge }: any) => {
     />
   );
 };
+
 interface NFTItem {
   id: string;
-  metadata: { name: string; image: string };
-  asset?: { id: string; metadata: { name: string; image: string } };
+  metadata: { name: string; image: string | string[] };
+  asset?: { id: string; metadata: { name: string; image: string | string[] } };
   currencyValuePerToken?: { displayValue: string; symbol: string };
   startTimeInSeconds?: number;
 }
@@ -94,6 +103,9 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         const listing = listingsInSelectedCollection.find(
           (listing: any) => listing.tokenId.toString() === nftId
         );
+        const imageUrl = Array.isArray(nft.metadata.image) 
+          ? nft.metadata.image[0] 
+          : nft.metadata.image;
 
         return {
           id: nftId,
@@ -180,7 +192,22 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <Image src={nft.metadata.image} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
+                      <Image 
+                        src={Array.isArray(nft.metadata.image) ? nft.metadata.image[0] : nft.metadata.image} 
+                        alt={nft.metadata.name} 
+                        width="100%" 
+                        height="190px" 
+                        objectFit="cover" 
+                        borderRadius="8px" 
+                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                          const target = e.target as HTMLImageElement;
+                          if (Array.isArray(nft.metadata.image) && nft.metadata.image.length > 1) {
+                            target.src = nft.metadata.image[1];
+                          } else {
+                            target.src = '/default-image.jpg'; // Update this to a valid local image path
+                          }
+                        }}
+                      />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
