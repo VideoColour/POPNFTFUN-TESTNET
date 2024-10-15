@@ -25,6 +25,7 @@ export const ChakraNextImage: React.FC<ChakraNextImageProps> = ({
         alt={alt}
         width={width}
         height={height}
+        onError={(e) => (e.currentTarget.src = '/Molders-01.jpg')} // Add fallback
         {...imgProps}
       />
     </Box>

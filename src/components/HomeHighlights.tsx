@@ -19,19 +19,9 @@ const BuyNowButton = dynamic(() =>
   }
 );
 
-const convertIpfsToHttp = (ipfsUrl: string | undefined): string => {
-  if (!ipfsUrl) return '/default-image-url.jpg'; // Provide a valid default image URL
-  
-  // Check if the URL is already in HTTP format
-  if (ipfsUrl.startsWith('http')) {
-    return ipfsUrl;
-  }
-  
-  // Remove 'ipfs://' if present
-  const cid = ipfsUrl.replace('ipfs://', '');
-  
-  // Use a public IPFS gateway
-  return `https://ipfs.io/ipfs/${cid}`;
+const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
+  if (!ipfsUrl) return '/Molder-01.jpg'; // Provide a default image URL
+  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 };
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
@@ -119,17 +109,6 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     setNftListings(mergedNfts);
   };
 
-  const fetchNFTData = async (nft: NFTItem) => {
-    try {
-      const imageUrl = convertIpfsToHttp(nft.metadata.image);
-      // Fetch and process other NFT data as needed
-      return { ...nft, imageUrl };
-    } catch (error) {
-      console.error(`Error fetching NFT data: ${error}`);
-      return { ...nft, imageUrl: '/default-image-url.jpg' };
-    }
-  };
-
   if (nftListings.length === 0) {
     return (
       <Box mt="40px" textAlign="center" position="relative" maxWidth="2400px" marginX="auto">
@@ -196,7 +175,15 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <Image src={nft.metadata.image} alt={nft.metadata.name} width="100%" height="190px" objectFit="cover" borderRadius="8px" />
+                      <Image
+                        src={nft.metadata.image}
+                        alt={nft.metadata.name}
+                        width="100%"
+                        height="190px"
+                        objectFit="cover"
+                        borderRadius="8px"
+                        fallbackSrc="/Molders-01.jpg" // Add a fallback image
+                      />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
