@@ -22,18 +22,20 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return ''; // Return an empty string or a default image URL
+  if (!ipfsUrl) return '';
   if (ipfsUrl.startsWith('ipfs://')) {
-    // Use multiple IPFS gateways for better reliability
     const gateways = [
       'https://ipfs.io/ipfs/',
       'https://gateway.pinata.cloud/ipfs/',
+      'https://cloudflare-ipfs.com/ipfs/',
+      'https://gateway.ipfs.io/ipfs/',
     ];
     const cid = ipfsUrl.slice(7);
-    return `${gateways[Math.floor(Math.random() * gateways.length)]}${cid}`;
+    return gateways.map(gateway => `${gateway}${cid}`);
   }
-  return ipfsUrl; // Return the original URL if it's not an IPFS URL
+  return [ipfsUrl];
 };
+
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
   return (
@@ -50,6 +52,7 @@ const CustomArrow = ({ type, onClick, isEdge }: any) => {
     />
   );
 };
+
 interface NFTItem {
   id: string;
   metadata: { name: string; image: string };
@@ -203,13 +206,23 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
                       <Image 
-                        src={convertIpfsToHttp(nft.metadata.image)} 
+                        src={convertIpfsToHttp(nft.metadata.image)[0]} 
                         alt={nft.metadata.name} 
                         width="100%" 
                         height="190px" 
                         objectFit="cover" 
                         borderRadius="8px" 
-                        fallbackSrc="/Molder-01.jpg" // Add a fallback image
+                        fallbackSrc="/Molder-01.jpg"
+                        onError={(e: { target: HTMLImageElement; }) => {
+                          const img = e.target as HTMLImageElement;
+                          const sources = convertIpfsToHttp(nft.metadata.image);
+                          const nextSource = sources[sources.indexOf(img.src) + 1];
+                          if (nextSource) {
+                            img.src = nextSource;
+                          } else {
+                            img.src = "/Molder-01.jpg";
+                          }
+                        }}
                       />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
