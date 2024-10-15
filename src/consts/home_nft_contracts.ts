@@ -3,7 +3,7 @@ import type { Chain } from "thirdweb";
 export const meldTestnet: Chain = {
   name: "Meld Testnet",
   id: 222000222, 
-  rpc: "https://222000222.rpc.thirdweb.com", 
+  rpc: "https://subnets.avax.network/meld/testnet/rpc", 
   nativeCurrency: {
     name: "gMeld",
     symbol: "gMELD",
