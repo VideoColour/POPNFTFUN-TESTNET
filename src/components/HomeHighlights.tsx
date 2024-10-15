@@ -21,8 +21,10 @@ const BuyNowButton = dynamic(() =>
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   if (!ipfsUrl) return ''; 
-  // Use a different IPFS gateway that doesn't require authentication
-  return ipfsUrl.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
+  // Use a single, reliable IPFS gateway
+  const gateway = "https://ipfs.io/ipfs/";
+  const cid = ipfsUrl.replace("ipfs://", "");
+  return `${gateway}${cid}`;
 };
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
@@ -59,7 +61,7 @@ const NFT_CONTRACT = {
   client: undefined,
   chain: {
     id: "222000222",
-    rpc: "https://222000222.rpc.thirdweb.com",
+    rpc: "https://testnet-rpc.meld.com",
   },
   title: "Galactic Eyes",
   thumbnailUrl: "https://videocolour.art/assets/img/portfolio/gifs/GALACTIC-EYE-160-web-v5.gif",
@@ -72,6 +74,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   const account = useActiveAccount(); 
   const carouselRef = useRef<any>(null); 
   const swiperRef = useRef<any>();
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo ? supplyInfo.endTokenId - supplyInfo.startTokenId + 1n : 0n;
@@ -195,17 +198,15 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
                       <Image 
-                        src={convertIpfsToHttp(nft.metadata.image) || 'https://via.placeholder.com/190x190?text=Image+Not+Available'} 
+                        src={imageErrors[nft.id] ? "/placeholder-image.png" : convertIpfsToHttp(nft.metadata.image)}
                         alt={nft.metadata.name || `NFT #${nft.id}`} 
                         width="100%" 
                         height="190px" 
                         objectFit="cover" 
                         borderRadius="8px" 
-                        fallbackSrc="https://via.placeholder.com/190x190?text=Image+Not+Available"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.src = 'https://via.placeholder.com/190x190?text=Image+Not+Available';
+                        fallbackSrc="/placeholder-image.png"
+                        onError={() => {
+                          setImageErrors(prev => ({ ...prev, [nft.id]: true }));
                         }}
                       />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">

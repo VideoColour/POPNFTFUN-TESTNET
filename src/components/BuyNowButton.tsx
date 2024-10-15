@@ -34,7 +34,7 @@ const addChain = async () => {
         {
           chainId: "0x3637275b", 
           chainName: "Meld Testnet",
-          rpcUrls: ["https://222000222.rpc.thirdweb.com"],
+          rpcUrls: ["https://testnet-rpc.meld.com"],
           nativeCurrency: {
             name: "gMeld",
             symbol: "gMELD",
