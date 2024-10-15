@@ -288,22 +288,23 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   );
 }
 
-function loadIPFSImage(cid: string, filename: string) {
-  const url = `https://your-ipfs-proxy.com/api/ipfs-proxy?cid=${cid}&filename=${filename}`;
-  
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => {
-      console.error(`Failed to load image: ${url}`);
-      reject(new Error('Image load failed'));
-    };
-    img.src = url;
-  });
-}
+const loadImage = async (cid: string, filename: string) => {
+  try {
+    const response = await fetch(`/api/ipfs-proxy?cid=${cid}&filename=${filename}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error loading IPFS image:', error);
+    // Provide a more user-friendly error message or fallback image
+    throw error;
+  }
+};
 
 // Usage
-loadIPFSImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0bdc.gif')
+loadImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0bdc.gif')
   .then((img: unknown) => {
     if (img instanceof HTMLImageElement) {
       // Use the loaded image
@@ -320,4 +321,6 @@ loadIPFSImage('Qma2AYGpEUUHeY4xhs1aD39Mh8nZ9LKLFcXdpZTyPi14cp', 'ezgif-7-09165e0
 function showPlaceholderImage() {
   throw new Error("Function not implemented.");
 }
+
+
 
