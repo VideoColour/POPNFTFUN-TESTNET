@@ -19,7 +19,7 @@ const BuyNowButton = dynamic(() =>
   }
 );
 
-const PINATA_GATEWAY = "https://amethyst-total-sole-31.mypinata.cloud";
+const PINATA_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY;
 const PINATA_JWT = process.env.PINATA_JWT;
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
