@@ -1,5 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
+  if (!ipfsUrl) return ''; // Return an empty string or a default image URL
+  return ipfsUrl.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { cid } = req.query
   if (!cid || typeof cid !== 'string') {
