@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing CID or filename' });
   }
 
-  const url = `https://amethyst-total-sole-31.mypinata.cloud/ipfs/${cid}/${filename}`;
+  const url = `${process.env.PINATA_GATEWAY}/ipfs/${cid}/${filename}`;
 
   try {
     const response = await axios.get(url, {
