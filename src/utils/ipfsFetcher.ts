@@ -2,26 +2,42 @@ const IPFS_GATEWAYS = [
     'https://ipfs.io/ipfs/',
     'https://gateway.pinata.cloud/ipfs/',
     'https://cloudflare-ipfs.com/ipfs/',
+    'https://gateway.ipfs.io/ipfs/',
+    'https://dweb.link/ipfs/',
     // Add more gateways here
   ];
   
-  export async function fetchWithRetry(url: string, maxRetries = 3): Promise<Response> {
-    for (let i = 0; i < maxRetries; i++) {
+  export const fetchWithRetry = async (url: string, retries = 3, delay = 1000): Promise<Response> => {
+    for (let i = 0; i < retries; i++) {
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { method: 'HEAD' });
         if (response.ok) return response;
-        throw new Error(`HTTP error! status: ${response.status}`);
       } catch (error) {
-        console.error(`Attempt ${i + 1} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        if (i === maxRetries - 1) throw error; // Rethrow on last attempt
+        if (i === retries - 1) throw error;
       }
-      // Wait before retrying (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    throw new Error(`Failed to fetch after ${maxRetries} retries`);
+    throw new Error(`Failed to fetch ${url} after ${retries} retries`);
+  };
+  
+  export function ipfsToHttps(ipfsUrl: string): string {
+    if (!ipfsUrl) return '';
+    if (ipfsUrl.startsWith('ipfs://')) {
+      return `https://ipfs.io/ipfs/${ipfsUrl.slice(7)}`;
+    }
+    return ipfsUrl;
   }
   
-  export async function fetchNFTMetadata(ipfsHash: string): Promise<any> {
+  export async function fetchNFTMetadata(tokenUri: string | undefined): Promise<any> {
+    if (!tokenUri) {
+      throw new Error('Token URI is undefined');
+    }
+
+    let ipfsHash = tokenUri;
+    if (tokenUri.startsWith('ipfs://')) {
+      ipfsHash = tokenUri.slice(7);
+    }
+
     for (const gateway of IPFS_GATEWAYS) {
       try {
         const url = `${gateway}${ipfsHash}`;

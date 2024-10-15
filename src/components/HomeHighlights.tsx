@@ -21,19 +21,31 @@ const BuyNowButton = dynamic(() =>
   }
 );
 
-const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return '';
+const getImageUrl = async (ipfsUrl: string | undefined): Promise<string> => {
+  if (!ipfsUrl) return '/molder-01.jpg'; // Replace with your default image path
+
+  const gateways = [
+    'https://ipfs.io/ipfs/',
+    'https://gateway.pinata.cloud/ipfs/',
+    'https://cloudflare-ipfs.com/ipfs/',
+    // Add more gateways as needed
+  ];
+
   if (ipfsUrl.startsWith('ipfs://')) {
-    const gateways = [
-      'https://ipfs.io/ipfs/',
-      'https://gateway.pinata.cloud/ipfs/',
-      'https://cloudflare-ipfs.com/ipfs/',
-      'https://gateway.ipfs.io/ipfs/',
-    ];
-    const cid = ipfsUrl.slice(7);
-    return gateways.map(gateway => `${gateway}${cid}`);
+    const cid = ipfsUrl.replace('ipfs://', '');
+    for (const gateway of gateways) {
+      try {
+        const url = `${gateway}${cid}`;
+        await fetchWithRetry(url);
+        return url;
+      } catch (error) {
+        console.warn(`Failed to fetch from ${gateway}`, error);
+      }
+    }
   }
-  return [ipfsUrl];
+
+  // If IPFS conversion fails, return the original URL or a default image
+  return ipfsUrl || '/molder-01.jpg';
 };
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
@@ -52,7 +64,6 @@ const CustomArrow = ({ type, onClick, isEdge }: any) => {
     />
   );
 };
-
 interface NFTItem {
   id: string;
   metadata: { name: string; image: string };
@@ -97,45 +108,63 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   );
 
   useEffect(() => {
-    fetchNFTs();
-  }, [allNFTs, listingsInSelectedCollection, nftContract]);
+    const fetchNFTs = async () => {
+      if (!allNFTs) return;
+      let mergedNfts: NFTItem[] = [];
 
-  const fetchNFTs = async () => {
-    if (!allNFTs) return;
-    let mergedNfts: NFTItem[] = [];
-
-    if (listingsInSelectedCollection.length === 0) {
-      mergedNfts = allNFTs.map((nft: any) => ({
-        id: nft.id.toString(),
-        metadata: nft.metadata,
-        asset: { id: nft.id.toString(), metadata: nft.metadata },
-      }));
-    } else {
-      mergedNfts = allNFTs.map((nft: any) => {
+      for (const nft of allNFTs) {
         const nftId = nft.id.toString();
         const listing = listingsInSelectedCollection.find(
           (listing: any) => listing.tokenId.toString() === nftId
         );
 
-        return listing
+        const imageUrl = await getImageUrl(nft.metadata.image);
+
+        const nftItem: NFTItem = listing
           ? {
               id: nftId,
-              metadata: nft.metadata,
-              asset: { id: nftId, metadata: nft.metadata },
+              metadata: { 
+                ...nft.metadata, 
+                image: imageUrl, 
+                name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
+              },
+              asset: { 
+                id: nftId, 
+                metadata: { 
+                  ...nft.metadata, 
+                  image: imageUrl, 
+                  name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
+                } 
+              },
               currencyValuePerToken: listing.currencyValuePerToken,
-              startTimeInSeconds: Number(listing.startTimeInSeconds), 
+              startTimeInSeconds: Number(listing.startTimeInSeconds),
             }
           : {
               id: nftId,
-              metadata: nft.metadata,
-              asset: { id: nftId, metadata: nft.metadata },
+              metadata: { 
+                ...nft.metadata, 
+                image: imageUrl, 
+                name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
+              },
+              asset: { 
+                id: nftId, 
+                metadata: { 
+                  ...nft.metadata, 
+                  image: imageUrl, 
+                  name: nft.metadata.name || `NFT #${nftId}` // Provide a default name
+                } 
+              },
             };
-      });
-    }
 
-    mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
-    setNftListings(mergedNfts);
-  };
+        mergedNfts.push(nftItem);
+      }
+
+      mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
+      setNftListings(mergedNfts);
+    };
+
+    fetchNFTs();
+  }, [allNFTs, listingsInSelectedCollection, nftContract]);
 
   if (nftListings.length === 0) {
     return (
@@ -147,6 +176,12 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }
   const maxItemsToShow = Math.min(nftListings.length, 7);
 
+  function convertIpfsToHttp(image: string): string {
+    if (image.startsWith('ipfs://')) {
+      return `https://ipfs.io/ipfs/${image.slice(7)}`;
+    }
+    return image;
+  }
 
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
@@ -206,23 +241,12 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
                       <Image 
-                        src={convertIpfsToHttp(nft.metadata.image)[0]} 
+                        src={convertIpfsToHttp(nft.metadata.image)} 
                         alt={nft.metadata.name} 
                         width="100%" 
                         height="190px" 
                         objectFit="cover" 
                         borderRadius="8px" 
-                        fallbackSrc="/Molder-01.jpg"
-                        onError={(e: { target: HTMLImageElement; }) => {
-                          const img = e.target as HTMLImageElement;
-                          const sources = convertIpfsToHttp(nft.metadata.image);
-                          const nextSource = sources[sources.indexOf(img.src) + 1];
-                          if (nextSource) {
-                            img.src = nextSource;
-                          } else {
-                            img.src = "/Molder-01.jpg";
-                          }
-                        }}
                       />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
