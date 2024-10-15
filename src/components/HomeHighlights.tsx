@@ -19,9 +19,19 @@ const BuyNowButton = dynamic(() =>
   }
 );
 
-const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return 'default-image-url.jpg'; // Provide a default image URL
-  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+const convertIpfsToHttp = (ipfsUrl: string | undefined): string => {
+  if (!ipfsUrl) return '/default-image-url.jpg'; // Provide a valid default image URL
+  
+  // Check if the URL is already in HTTP format
+  if (ipfsUrl.startsWith('http')) {
+    return ipfsUrl;
+  }
+  
+  // Remove 'ipfs://' if present
+  const cid = ipfsUrl.replace('ipfs://', '');
+  
+  // Use a public IPFS gateway
+  return `https://ipfs.io/ipfs/${cid}`;
 };
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
@@ -107,6 +117,17 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
 
     mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
     setNftListings(mergedNfts);
+  };
+
+  const fetchNFTData = async (nft: NFTItem) => {
+    try {
+      const imageUrl = convertIpfsToHttp(nft.metadata.image);
+      // Fetch and process other NFT data as needed
+      return { ...nft, imageUrl };
+    } catch (error) {
+      console.error(`Error fetching NFT data: ${error}`);
+      return { ...nft, imageUrl: '/default-image-url.jpg' };
+    }
   };
 
   if (nftListings.length === 0) {
