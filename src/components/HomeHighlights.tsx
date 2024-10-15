@@ -20,8 +20,8 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return '';
-  return ipfsUrl.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
+  if (!ipfsUrl) return 'default-image-url.jpg'; // Provide a default image URL
+  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 };
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
@@ -87,27 +87,31 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }, [allNFTs, listingsInSelectedCollection, nftContract]);
 
   const fetchNFTs = async () => {
-    if (!allNFTs) return;
-    const mergedNfts: NFTItem[] = allNFTs.map((nft: any) => {
-      const nftId = nft.id.toString();
-      const listing = listingsInSelectedCollection.find(
-        (listing: any) => listing.tokenId.toString() === nftId
-      );
+    try {
+      if (!allNFTs) return;
+      const mergedNfts: NFTItem[] = allNFTs.map((nft: any) => {
+        const nftId = nft.id.toString();
+        const listing = listingsInSelectedCollection.find(
+          (listing: any) => listing.tokenId.toString() === nftId
+        );
 
-      return {
-        id: nftId,
-        metadata: {
-          name: nft.metadata.name || "Unknown Name",
-          image: convertIpfsToHttp(nft.metadata.image),
-        },
-        asset: { id: nftId, metadata: nft.metadata },
-        currencyValuePerToken: listing?.currencyValuePerToken,
-        startTimeInSeconds: listing ? Number(listing.startTimeInSeconds) : undefined,
-      };
-    });
+        return {
+          id: nftId,
+          metadata: {
+            name: nft.metadata.name || "Unknown Name",
+            image: convertIpfsToHttp(nft.metadata.image),
+          },
+          asset: { id: nftId, metadata: nft.metadata },
+          currencyValuePerToken: listing?.currencyValuePerToken,
+          startTimeInSeconds: listing ? Number(listing.startTimeInSeconds) : undefined,
+        };
+      });
 
-    mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
-    setNftListings(mergedNfts);
+      mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
+      setNftListings(mergedNfts);
+    } catch (error) {
+      console.error("Error fetching NFTs:", error);
+    }
   };
 
   if (nftListings.length === 0) {

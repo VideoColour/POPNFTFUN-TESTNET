@@ -22,12 +22,7 @@ const BuyNowButton = dynamic(() =>
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   if (!ipfsUrl) return '';
-  const gateways = [
-    "https://ipfs.io/ipfs/",
-    "https://cloudflare-ipfs.com/ipfs/",
-    "https://gateway.pinata.cloud/ipfs/"
-  ];
-  return gateways.map(gateway => ipfsUrl.replace("ipfs://", gateway));
+  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 };
 
 interface NFTItem {
