@@ -20,8 +20,8 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return 'default-image-url.jpg'; // Provide a default image URL
-  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+  if (!ipfsUrl) return '';
+  return ipfsUrl.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
 };
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
