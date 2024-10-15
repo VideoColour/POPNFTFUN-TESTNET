@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Text, Heading, Flex, Image, IconButton } from "@chakra-ui/react";
+import { Box, Text, Heading, Flex, Image, IconButton, Spinner } from "@chakra-ui/react";
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
@@ -20,17 +20,9 @@ const BuyNowButton = dynamic(() =>
 );
 
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
-  if (!ipfsUrl) return '/default-image.jpg'; // Update this to a valid local image path
-  // Try multiple IPFS gateways
-  const gateways = [
-    "https://ipfs.io/ipfs/",
-    "https://gateway.pinata.cloud/ipfs/",
-    "https://cloudflare-ipfs.com/ipfs/"
-  ];
-  const cid = ipfsUrl.replace("ipfs://", "");
-  return gateways.map(gateway => `${gateway}${cid}`);
+  if (!ipfsUrl) return 'default-image-url.jpg'; // Provide a default image URL
+  return ipfsUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 };
-
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
   const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
   return (
@@ -47,11 +39,10 @@ const CustomArrow = ({ type, onClick, isEdge }: any) => {
     />
   );
 };
-
 interface NFTItem {
   id: string;
-  metadata: { name: string; image: string | string[] };
-  asset?: { id: string; metadata: { name: string; image: string | string[] } };
+  metadata: { name: string; image: string };
+  asset?: { id: string; metadata: { name: string; image: string } };
   currencyValuePerToken?: { displayValue: string; symbol: string };
   startTimeInSeconds?: number;
 }
@@ -72,12 +63,29 @@ const NFT_CONTRACT = {
   type: "ERC721",
 };
 
+const NFTImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [error, setError] = useState(false);
+
+  return (
+    <Image
+      src={error ? "/path/to/fallback-image.jpg" : src}
+      alt={alt}
+      width="100%"
+      height="190px"
+      objectFit="cover"
+      borderRadius="8px"
+      onError={() => setError(true)}
+    />
+  );
+};
+
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
   const [nftListings, setNftListings] = useState<NFTItem[]>([]);
   const account = useActiveAccount(); 
   const carouselRef = useRef<any>(null); 
   const swiperRef = useRef<any>();
+  const [isLoading, setIsLoading] = useState(true);
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo ? supplyInfo.endTokenId - supplyInfo.startTokenId + 1n : 0n;
@@ -96,6 +104,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }, [allNFTs, listingsInSelectedCollection, nftContract]);
 
   const fetchNFTs = async () => {
+    setIsLoading(true);
     try {
       if (!allNFTs) return;
       const mergedNfts: NFTItem[] = allNFTs.map((nft: any) => {
@@ -103,9 +112,6 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         const listing = listingsInSelectedCollection.find(
           (listing: any) => listing.tokenId.toString() === nftId
         );
-        const imageUrl = Array.isArray(nft.metadata.image) 
-          ? nft.metadata.image[0] 
-          : nft.metadata.image;
 
         return {
           id: nftId,
@@ -123,8 +129,19 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
       setNftListings(mergedNfts);
     } catch (error) {
       console.error("Error fetching NFTs:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Box mt="40px" textAlign="center">
+        <Spinner size="xl" />
+        <Text mt="4">Loading NFTs...</Text>
+      </Box>
+    );
+  }
 
   if (nftListings.length === 0) {
     return (
@@ -192,22 +209,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
-                      <Image 
-                        src={Array.isArray(nft.metadata.image) ? nft.metadata.image[0] : nft.metadata.image} 
-                        alt={nft.metadata.name} 
-                        width="100%" 
-                        height="190px" 
-                        objectFit="cover" 
-                        borderRadius="8px" 
-                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                          const target = e.target as HTMLImageElement;
-                          if (Array.isArray(nft.metadata.image) && nft.metadata.image.length > 1) {
-                            target.src = nft.metadata.image[1];
-                          } else {
-                            target.src = '/default-image.jpg'; // Update this to a valid local image path
-                          }
-                        }}
-                      />
+                      <NFTImage src={nft.metadata.image} alt={nft.metadata.name} />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
