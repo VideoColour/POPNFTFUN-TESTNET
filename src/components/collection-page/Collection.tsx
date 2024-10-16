@@ -1,3 +1,4 @@
+"use client";
 import { MediaRenderer, useReadContract } from "thirdweb/react";
 import { getNFT as getNFT721 } from "thirdweb/extensions/erc721";
 import { getNFT as getNFT1155 } from "thirdweb/extensions/erc1155";
@@ -8,7 +9,12 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import { ListingGrid } from "./ListingGrid";
 import { AllNftsGrid } from "./AllNftsGrid";
 
-export function Collection() {
+export interface CollectionProps {
+  chainId: string;
+  contractAddress: string;
+}
+
+export function Collection({ chainId, contractAddress }: CollectionProps) {
   const [tabIndex, setTabIndex] = useState<number>(0);
   const {
     type,
