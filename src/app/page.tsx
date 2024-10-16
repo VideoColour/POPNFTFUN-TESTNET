@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { NFT_CONTRACTS } from "@/consts/home_nft_contracts";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { Box, Flex, Heading, Image, Text, Button, IconButton, SimpleGrid, Fade } from "@chakra-ui/react";
@@ -52,6 +52,59 @@ export default function Home() {
 
   const currentNFT = NFT_CONTRACTS[currentIndex];
 
+  const handlePrevClick = useCallback(() => {
+    sliderRef.current?.slickPrev();
+  }, []);
+
+  const handleNextClick = useCallback(() => {
+    sliderRef.current?.slickNext();
+  }, []);
+
+  const memoizedSliderSettings = useMemo(() => ({
+    ...sliderSettings,
+    beforeChange: handleBeforeChange,
+  }), [handleBeforeChange]);
+
+  const memoizedNFTContracts = useMemo(() => NFT_CONTRACTS.map((item, index) => (
+    <Flex key={index} direction="column" justifyContent="center" height="100%">
+      {/* ... */}
+    </Flex>
+  )), []);
+
+  const memoizedFeaturedCollections = useMemo(() => NFT_CONTRACTS.map((item, index) => (
+    <ChakraNextLink
+      href={`/collection/${item.chain.id}/${item.address}`}
+      key={index}
+      borderRadius="16px"
+      p="0px"
+      w={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
+      h={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
+      mt="30px"
+      ml="30px"
+      _hover={{
+        transform: "scale(1.05)",
+        transition: "all 0.2s ease-in-out",
+      }}
+      transition="all 0.2s ease-in-out"
+    >
+      <Image
+        src={item.thumbnailUrl}
+        alt={item.title}
+        w={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
+        h={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
+        borderRadius="300px"
+        objectFit="cover"
+        _hover={{
+          transform: "scale(1.02)",
+          transition: "all 0.2s ease-in-out",
+        }}
+      />
+      <Text mt="10px" fontSize={{ base: "md", md: "md", lg: "xl" }} textAlign="center" color="white">
+        {item.title}
+      </Text>
+    </ChakraNextLink>
+  )), []);
+
   return (
     <Flex direction="column" alignItems="center" width="100%">
       <Flex
@@ -97,6 +150,7 @@ export default function Home() {
           <Image
             src={currentNFT?.thumbnailUrl || "/home_creator_1.jpg"}
             alt={currentNFT?.title || "Default Title"}
+            loading="lazy"
             borderRadius="25px"
             boxShadow="2xl"
             width={{ base: "160px", md: "350px", lg: "550px" }}
@@ -188,25 +242,21 @@ export default function Home() {
 
         <Box width="100%" height="100%">
           <Slider
-            {...sliderSettings}
-            beforeChange={handleBeforeChange}
+            {...memoizedSliderSettings}
             ref={sliderRef}
           >
-            {NFT_CONTRACTS.map((item, index) => (
-              <Flex key={index} direction="column" justifyContent="center" height="100%">
-              </Flex>
-            ))}
+            {memoizedNFTContracts}
           </Slider>
         </Box>
 
         <IconButton
           aria-label="Previous"
           icon={<ArrowBackIcon />}
+          onClick={handlePrevClick}
           position="absolute"
           top="50%"
           left="10px"
           transform="translateY(-50%)"
-          onClick={() => sliderRef.current?.slickPrev()}
           zIndex="1000"
           colorScheme="gray.500"
           variant="none"
@@ -217,11 +267,11 @@ export default function Home() {
         <IconButton
           aria-label="Next"
           icon={<ArrowForwardIcon />}
+          onClick={handleNextClick}
           position="absolute"
           top="50%"
           right="10px"
           transform="translateY(-50%)"
-          onClick={() => sliderRef.current?.slickNext()}
           zIndex="1000"
           colorScheme="gray.500"
           variant="none"
@@ -331,39 +381,7 @@ export default function Home() {
           minH={{ base: "25vh", sm: "25vh", md: "30vh", lg: "52vh" }}
           pb={{ base: "10px", lg: "100px" }}
         >
-          {NFT_CONTRACTS.map((item, index) => (
-            <ChakraNextLink
-              href={`/collection/${item.chain.id}/${item.address}`}
-              key={index}
-              borderRadius="16px"
-              p="0px"
-              w={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
-              h={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
-              mt="30px"
-              ml="30px"
-              _hover={{
-                transform: "scale(1.05)",
-                transition: "all 0.2s ease-in-out",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
-              <Image
-                src={item.thumbnailUrl}
-                alt={item.title}
-                w={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
-                h={{ base: "70px", md: "120px", lg: "200px", xl: "300px", "2xl": "440px" }}
-                borderRadius="300px"
-                objectFit="cover"
-                _hover={{
-                  transform: "scale(1.02)",
-                  transition: "all 0.2s ease-in-out",
-                }}
-              />
-              <Text mt="10px" fontSize={{ base: "md", md: "md", lg: "xl" }} textAlign="center" color="white">
-                {item.title}
-              </Text>
-            </ChakraNextLink>
-          ))}
+          {memoizedFeaturedCollections}
         </Flex>
       </Box>
 

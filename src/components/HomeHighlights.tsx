@@ -37,7 +37,8 @@ const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   const [extractedCid, ...filenameParts] = cid.split('/');
   const filename = filenameParts.join('/');
   
-  return `/api/ipfs-proxy?cid=${encodeURIComponent(extractedCid)}&filename=${encodeURIComponent(filename)}`;
+  // Use a different IPFS gateway or your custom proxy
+  return `https://ipfs.io/ipfs/${extractedCid}/${filename}`;
 };
 
 const CustomArrow = ({ type, onClick, isEdge }: any) => {
@@ -209,20 +210,20 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
                     <Flex direction="column" height="100%">
                     <Image 
-  src={convertIpfsToHttp(nft.metadata.image)}
-  alt={nft.metadata.name || `NFT #${nft.id}`} 
-  width={190}
-  height={190}
-  objectFit="cover" 
-  borderRadius="8px" 
-  fallbackSrc="/Molder-01.jpg"
-  onError={(e: any) => {
-    const target = e.target as HTMLImageElement;
-    console.error('Image load error:', target.src);
-    target.onerror = null; // Prevent infinite loop
-    target.src = '/Molder-01.jpg';
-  }}
-/>
+                      src={convertIpfsToHttp(nft.metadata.image)}
+                      alt={nft.metadata.name || `NFT #${nft.id}`} 
+                      width={190}
+                      height={190}
+                      objectFit="cover" 
+                      borderRadius="8px" 
+                      fallbackSrc="/Molder-01.jpg"
+                      onError={(e: any) => {
+                        const target = e.target as HTMLImageElement;
+                        console.error('Image load error:', target.src, 'NFT ID:', nft.id);
+                        target.onerror = null; // Prevent infinite loop
+                        target.src = '/Molder-01.jpg';
+                      }}
+                    />
                       <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
                         {nft.metadata.name}
                       </Text>
