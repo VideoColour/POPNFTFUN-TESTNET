@@ -7,14 +7,18 @@ import Slider from "react-slick";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
 import { FaPlay, FaPause, FaTelegramPlane, FaExclamationTriangle } from "react-icons/fa";
 import { FaRegFileLines, FaXTwitter } from "react-icons/fa6";
-import HomeHighlights from "@/components/HomeHighlights";
-import MarketplaceProvider from "@/hooks/useMarketplaceContext";
+
 import HomeHighlights2 from "@/components/HomeHighlights2";
 import HomeHighlights3 from "@/components/HomeHighlights3";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import '@/consts/customstyles.css';
 import { keyframes } from "@emotion/react";
 import '@/styles/slider.css';
+import dynamic from 'next/dynamic';
+import { debounce } from 'lodash';
+const HomeHighlights = dynamic(() => import('@/components/HomeHighlights'), { ssr: false });
+const MarketplaceProvider = dynamic(() => import('@/hooks/useMarketplaceContext'), { ssr: false });
+
 const sliderSettings = {
   dots: false,
   infinite: true,
@@ -33,14 +37,14 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(true);
   const sliderRef = React.useRef<Slider | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [listings, setListings] = useState([]);
-  const [allValidListings, setAllValidListings] = useState([]);
+  const [listings, setListings] = useState(null);
+  const [allValidListings, setAllValidListings] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleBeforeChange = (_: any, next: React.SetStateAction<number>) => setCurrentIndex(next);
 
   const colorWave = keyframes`
-    0% { color: #ff007c; }
+    0% { color: #ff007c; will-change: color; }
     25% { color: #ffca3a; }
     50% { color: #8ac926; }
     75% { color: #1982c4; }
@@ -53,13 +57,19 @@ export default function Home() {
 
   const currentNFT = NFT_CONTRACTS[currentIndex];
 
-  const handlePrevClick = useCallback(() => {
-    sliderRef.current?.slickPrev();
-  }, []);
+  const debouncedHandlePrevClick = useCallback(
+    debounce(() => {
+      sliderRef.current?.slickPrev();
+    }, 300),
+    []
+  );
 
-  const handleNextClick = useCallback(() => {
-    sliderRef.current?.slickNext();
-  }, []);
+  const debouncedHandleNextClick = useCallback(
+    debounce(() => {
+      sliderRef.current?.slickNext();
+    }, 300),
+    []
+  );
 
   const memoizedSliderSettings = useMemo(() => ({
     ...sliderSettings,
@@ -153,12 +163,15 @@ export default function Home() {
           <Image
             src={currentNFT?.thumbnailUrl || "/home_creator_1.jpg"}
             alt={currentNFT?.title || "Default Title"}
+            width={550}
+            height={550}
             loading="lazy"
-            borderRadius="25px"
-            boxShadow="2xl"
-            width={{ base: "160px", md: "350px", lg: "550px" }}
-            height={{ base: "160px", md: "350px", lg: "550px" }}
-            mb={8}
+            style={{
+              borderRadius: "25px",
+              boxShadow: "2xl",
+              maxWidth: "100%",
+              height: "auto",
+            }}
           />
 
           <Heading fontSize={{ base: "2xl", md: "4xl", lg: "5xl" }} mb={4} color="white">
@@ -256,7 +269,7 @@ export default function Home() {
         <IconButton
           aria-label="Previous"
           icon={<ArrowBackIcon />}
-          onClick={handlePrevClick}
+          onClick={debouncedHandlePrevClick}
           position="absolute"
           top="50%"
           left="10px"
@@ -271,7 +284,7 @@ export default function Home() {
         <IconButton
           aria-label="Next"
           icon={<ArrowForwardIcon />}
-          onClick={handleNextClick}
+          onClick={debouncedHandleNextClick}
           position="absolute"
           top="50%"
           right="10px"
@@ -358,19 +371,19 @@ export default function Home() {
 
       <Box width="90%" mt="20px" flexGrow={1} mb="-50px">
         <MarketplaceProvider chainId="222000222" contractAddress="0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA">
-          <HomeHighlights allValidListings={allValidListings} />
+          <HomeHighlights allValidListings={allValidListings || []} />
         </MarketplaceProvider>
       </Box>
 
       <Box width="90%" mt="20px" flexGrow={1} mb="-50px">
         <MarketplaceProvider chainId="222000222" contractAddress="0x2220001D2CFb9B6066A91dE5D4e861A21f549BA0">
-          <HomeHighlights allValidListings={allValidListings} />
+          <HomeHighlights allValidListings={allValidListings || []} />
         </MarketplaceProvider>
       </Box>
 
       <Box width="90%" mt="20px" flexGrow={1} mb="80px">
         <MarketplaceProvider chainId="222000222" contractAddress="0xEdc67F3f52D9afd84D0487BD3b830a83c98FEe2B">
-          <HomeHighlights allValidListings={allValidListings} />
+          <HomeHighlights allValidListings={allValidListings || []} />
         </MarketplaceProvider>
       </Box>
 
