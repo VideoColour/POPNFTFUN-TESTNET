@@ -1,21 +1,60 @@
 .custom-slider {
   position: relative;
+  height: 100%;
 }
 
 .custom-slider .slick-slide {
-  transition: opacity 1s ease-in-out, transform 1s ease-in-out;
   opacity: 0;
-  transform: scale(0.9);
+  transition: opacity 500ms linear;
 }
 
 .custom-slider .slick-slide.slick-active {
   opacity: 1;
-  transform: scale(1);
+}
+
+.custom-slider .slick-list,
+.custom-slider .slick-track {
+  height: 100%;
 }
 
 .custom-slider .slick-slide > div {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100%;
+}
+
+/* Add these new rules */
+.custom-slider .slick-list {
+  overflow: hidden;
+}
+
+.custom-slider .slick-track {
+  display: flex;
+  align-items: center;
+}
+
+.custom-slider .slick-slide {
+  flex: 0 0 auto;
+  height: auto;
+}
+
+.custom-slider .slide-item {
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+.custom-slider .slick-active .slide-item {
+  opacity: 1;
+}
+
+.custom-slider .slick-active + .slick-slide .slide-item {
+  transform: translateX(-100%);
+}
+
+/* Add these new styles for background transition */
+.custom-slider .slick-slide {
+  position: relative;
+  z-index: 1;
+}
+
+.custom-slider .slick-current {
+  z-index: 2;
 }

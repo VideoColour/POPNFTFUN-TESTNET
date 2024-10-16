@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { NFT_CONTRACTS } from "@/consts/home_nft_contracts";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { Box, Flex, Heading, Image, Text, Button, IconButton, SimpleGrid, Fade } from "@chakra-ui/react";
@@ -19,29 +19,27 @@ import { debounce } from 'lodash';
 const HomeHighlights = dynamic(() => import('@/components/HomeHighlights'), { ssr: false });
 const MarketplaceProvider = dynamic(() => import('@/hooks/useMarketplaceContext'), { ssr: false });
 
-const sliderSettings = {
-  dots: false,
-  infinite: true,
-  slidesToShow: 1,
-  slidesToScroll: 1,
-  autoplay: true,
-  autoplaySpeed: 7000,
-  arrows: false,
-  pauseOnHover: true,
-  fade: false,
-  cssEase: 'cubic-bezier(0.45, 0, 0.55, 1)', // Smooth easing function
-  speed: 1000, // Transition duration in milliseconds
-};
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
+interface CustomSlider extends Slider {
+  slickNext(): void;
+  slickPrev(): void;
+  slickGoTo(slideNumber: number, dontAnimate?: boolean): void;
+}
 
 export default function Home() {
-  const [isPlaying, setIsPlaying] = useState(true);
-  const sliderRef = React.useRef<Slider | null>(null);
+  const sliderRef = useRef<CustomSlider | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState(0);
   const [listings, setListings] = useState(null);
   const [allValidListings, setAllValidListings] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleBeforeChange = (_: any, next: React.SetStateAction<number>) => setCurrentIndex(next);
+  const handleBeforeChange = (oldIndex: number, newIndex: number) => {
+    setPrevIndex(oldIndex);
+    setCurrentIndex(newIndex);
+  };
 
   const colorWave = keyframes`
     0% { color: #ff007c; will-change: color; }
@@ -70,6 +68,38 @@ export default function Home() {
     }, 300),
     []
   );
+
+  const sliderSettings = {
+    dots: false,
+    infinite: true,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: false,
+    arrows: false,
+    fade: false,
+    cssEase: 'ease',
+    speed: 500,
+    beforeChange: handleBeforeChange,
+    afterChange: (current: number) => {
+      console.log(`Slide changed to ${current}`);
+    },
+  };
+
+  const handlePrevClick = useCallback(() => {
+    console.log('Prev button clicked');
+    if (sliderRef.current) {
+      const prevSlide = (currentIndex - 1 + NFT_CONTRACTS.length) % NFT_CONTRACTS.length;
+      sliderRef.current.slickGoTo(prevSlide);
+    }
+  }, [currentIndex]);
+
+  const handleNextClick = useCallback(() => {
+    console.log('Next button clicked');
+    if (sliderRef.current) {
+      const nextSlide = (currentIndex + 1) % NFT_CONTRACTS.length;
+      sliderRef.current.slickGoTo(nextSlide);
+    }
+  }, [currentIndex]);
 
   const memoizedSliderSettings = useMemo(() => ({
     ...sliderSettings,
@@ -120,19 +150,12 @@ export default function Home() {
 
   return (
     <Flex direction="column" alignItems="center" width="100%">
-      <Flex
-        justifyContent="center"
-        alignItems="center"
-        width="90%"
+      <Box 
+        width="90%" 
+        position="relative" 
         height={{ base: "30vh", sm: "40vh", md: "55vh", lg: "70vh", xl: "80vh" }}
-        maxW="2750px"
-        mx="auto"
-        mt="0px"
-        position="relative"
         borderRadius="lg"
-        boxShadow="2xl"
         overflow="hidden"
-        bg="blackAlpha.300"
       >
         <Box
           position="absolute"
@@ -140,136 +163,134 @@ export default function Home() {
           left={0}
           right={0}
           bottom={0}
-          backgroundImage={`url(${currentNFT?.thumbnailUrl || "/home_creator_1.jpg"})`}
+          backgroundImage={`url(${NFT_CONTRACTS[prevIndex]?.thumbnailUrl || "/home_creator_1.jpg"})`}
+          backgroundSize="cover"
+          backgroundPosition="center"
+          filter="blur(120px) saturate(2.2) contrast(1.4) brightness(1.4)"
+          opacity={0.3}
+          zIndex={-2}
+          transition="opacity 0.5s ease-in-out"
+        />
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          backgroundImage={`url(${NFT_CONTRACTS[currentIndex]?.thumbnailUrl || "/home_creator_1.jpg"})`}
           backgroundSize="cover"
           backgroundPosition="center"
           filter="blur(120px) saturate(2.2) contrast(1.4) brightness(1.4)"
           opacity={0.3}
           zIndex={-1}
+          transition="opacity 0.5s ease-in-out"
         />
-
-        <Box
-          position="absolute"
-          top="50%"
-          left="50%"
-          transform="translate(-50%, -50%)"
-          zIndex={1}
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
+        
+        <Slider
+          {...sliderSettings}
+          ref={sliderRef as React.RefObject<Slider>}
+          className="custom-slider"
         >
-          <Image
-            src={currentNFT?.thumbnailUrl || "/home_creator_1.jpg"}
-            alt={currentNFT?.title || "Default Title"}
-            width={550}
-            height={550}
-            loading="lazy"
-            style={{
-              borderRadius: "25px",
-              boxShadow: "2xl",
-              maxWidth: "100%",
-              height: "auto",
-            }}
-          />
-
-          <Heading fontSize={{ base: "2xl", md: "4xl", lg: "5xl" }} mb={4} color="white">
-            {currentNFT?.title || "Default Title"}
-          </Heading>
-
-          <Flex alignItems="center" justifyContent="center" mb={4}>
-            <Image
-              src={currentNFT?.avatarUrl || "/home_creator_1.jpg"}
-              alt={currentNFT?.name || "Creator Avatar"}
-              boxSize="32px"
-              borderRadius="full"
-              mr={1.5}
-            />
-            <Text fontSize="xl">
-              by {" "}
-              <ChakraNextLink
-                href={currentNFT?.profileUrl || ""}
-                _hover={{ color: "red.500" }}
-                _focus={{ boxShadow: "none" }}
-                textDecoration="none"
-                fontWeight="bold"
-                transition="color 0.2s ease-in-out"
-                color="white.200"
-              >
-                {currentNFT?.name || "Unknown Creator"}
-              </ChakraNextLink>
-            </Text>
-          </Flex>
-
-          <Box
-            maxW="600px"
-            mb={10}
-            color="gray.200"
-            overflow={isExpanded ? "visible" : "hidden"}
-            textOverflow="ellipsis"
-            whiteSpace="normal"
-            display="-webkit-box"
-            sx={{
-              WebkitLineClamp: isExpanded ? "none" : "2",
-              WebkitBoxOrient: "vertical",
-              lineHeight: "1.5",
-              maxHeight: isExpanded ? "none" : "3em",
-              minHeight: "3.2em",
-              paddingBottom: "-5em",
-              transition: "all 0.3s ease-in-out",
-              position: "relative",
-            }}
-          >
-            <Text fontSize={{ base: "md", md: "md", lg: "md", xl: "md" }} mb={isExpanded ? 4 : 0}>
-              {currentNFT?.description || "No description available."}
-            </Text>
-          </Box>
-
-          {currentNFT?.description && currentNFT.description.split(" ").length > 20 && (
-            <Flex justifyContent="center" alignItems="center" mt={2}>
-              <Button
-                size="sm"
-                mt={isExpanded ? 4 : 0}
-                color="gray.300"
-                backgroundColor="transparent"
-                _hover={{ bg: "rgba(255, 255, 255, 0.1)" }}
-                onClick={() => setIsExpanded((prev: boolean) => !prev)}
-                alignSelf="center"
-                justifySelf="center"
-                visibility="visible"
-                position="relative"
-                top="-40px"
-                zIndex={100}
-              >
-                {isExpanded ? <ChevronUpIcon boxSize={5} /> : <ChevronDownIcon boxSize={5} />}
-              </Button>
-            </Flex>
-          )}
-
-          <Flex justifyContent="center" gap={4} mt={-2}>
-            <ChakraNextLink href={`/collection/${currentNFT?.chain?.id || 0}/${currentNFT?.address || "#"}`}>
-              <Button colorScheme="rgb(222, 222, 222, 0.5)" variant="outline" size="lg">
-                Open Collection
-              </Button>
-            </ChakraNextLink>
-          </Flex>
-        </Box>
-
-        <Box width="100%" height="100%">
-          <Slider
-            {...memoizedSliderSettings}
-            ref={sliderRef}
-            className="custom-slider"
-          >
-            {memoizedNFTContracts}
-          </Slider>
-        </Box>
+          {NFT_CONTRACTS.map((item, index) => (
+            <Box key={item.address || index} height="100%" className="slide-item">
+              <Flex direction="column" justifyContent="center" alignItems="center" height="100%">
+                <Image
+                  src={item.thumbnailUrl}
+                  alt={item.title}
+                  width={550}
+                  height={550}
+                  style={{
+                    borderRadius: "25px",
+                    boxShadow: "2xl",
+                    maxWidth: "100%",
+                    height: "auto",
+                  }}
+                />
+                <Heading fontSize={{ base: "2xl", md: "4xl", lg: "5xl" }} mb={4} color="white">
+                  {item.title}
+                </Heading>
+                <Flex alignItems="center" justifyContent="center" mb={4}>
+                  <Image
+                    src={item.avatarUrl || "/home_creator_1.jpg"}
+                    alt={item.name || "Creator Avatar"}
+                    boxSize="32px"
+                    borderRadius="full"
+                    mr={1.5}
+                  />
+                  <Text fontSize="xl" color="white">
+                    by {" "}
+                    <ChakraNextLink
+                      href={item.profileUrl || ""}
+                      _hover={{ color: "red.500" }}
+                      _focus={{ boxShadow: "none" }}
+                      textDecoration="none"
+                      fontWeight="bold"
+                      transition="color 0.2s ease-in-out"
+                      color="white.200"
+                    >
+                      {item.name || "Unknown Creator"}
+                    </ChakraNextLink>
+                  </Text>
+                </Flex>
+                <Box
+                  maxW="600px"
+                  mb={10}
+                  color="gray.200"
+                  overflow={isExpanded ? "visible" : "hidden"}
+                  textOverflow="ellipsis"
+                  whiteSpace="normal"
+                  display="-webkit-box"
+                  sx={{
+                    WebkitLineClamp: isExpanded ? "none" : "2",
+                    WebkitBoxOrient: "vertical",
+                    lineHeight: "1.5",
+                    maxHeight: isExpanded ? "none" : "3em",
+                    minHeight: "3.2em",
+                    paddingBottom: "-5em",
+                    transition: "all 0.3s ease-in-out",
+                    position: "relative",
+                  }}
+                >
+                  <Text fontSize={{ base: "md", md: "md", lg: "md", xl: "md" }} mb={isExpanded ? 4 : 0}>
+                    {item.description || "No description available."}
+                  </Text>
+                </Box>
+                {item.description && item.description.split(" ").length > 20 && (
+                  <Flex justifyContent="center" alignItems="center" mt={2}>
+                    <Button
+                      size="sm"
+                      mt={isExpanded ? 4 : 0}
+                      color="gray.300"
+                      backgroundColor="transparent"
+                      _hover={{ bg: "rgba(255, 255, 255, 0.1)" }}
+                      onClick={() => setIsExpanded((prev) => !prev)}
+                      alignSelf="center"
+                      justifySelf="center"
+                      visibility="visible"
+                      position="relative"
+                      top="-40px"
+                      zIndex={100}
+                    >
+                      {isExpanded ? <ChevronUpIcon boxSize={5} /> : <ChevronDownIcon boxSize={5} />}
+                    </Button>
+                  </Flex>
+                )}
+                <Flex justifyContent="center" gap={4} mt={-2}>
+                  <ChakraNextLink href={`/collection/${item.chain?.id || 0}/${item.address || "#"}`}>
+                    <Button colorScheme="rgb(222, 222, 222, 0.5)" variant="outline" size="lg">
+                      Open Collection
+                    </Button>
+                  </ChakraNextLink>
+                </Flex>
+              </Flex>
+            </Box>
+          ))}
+        </Slider>
 
         <IconButton
           aria-label="Previous"
           icon={<ArrowBackIcon />}
-          onClick={debouncedHandlePrevClick}
+          onClick={() => sliderRef.current?.slickPrev()}
           position="absolute"
           top="50%"
           left="10px"
@@ -278,13 +299,12 @@ export default function Home() {
           colorScheme="gray.500"
           variant="none"
           size="lg"
-          _hover={{ color: "gray.100", bg: "transparent" }}
+          _hover={{ color: "gray.100", bg: "rgba(0, 0, 0, 0.1)" }}
         />
-
         <IconButton
           aria-label="Next"
           icon={<ArrowForwardIcon />}
-          onClick={debouncedHandleNextClick}
+          onClick={() => sliderRef.current?.slickNext()}
           position="absolute"
           top="50%"
           right="10px"
@@ -293,9 +313,9 @@ export default function Home() {
           colorScheme="gray.500"
           variant="none"
           size="lg"
-          _hover={{ color: "gray.100", bg: "transparent" }}
+          _hover={{ color: "gray.100", bg: "rgba(0, 0, 0, 0.1)" }}
         />
-      </Flex>
+      </Box>
 
       <Flex
         justifyContent="space-between"
