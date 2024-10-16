@@ -1,0 +1,21 @@
+.custom-slider {
+  position: relative;
+}
+
+.custom-slider .slick-slide {
+  transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.custom-slider .slick-slide.slick-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.custom-slider .slick-slide > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}

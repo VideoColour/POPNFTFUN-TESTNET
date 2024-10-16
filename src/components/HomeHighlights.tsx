@@ -151,6 +151,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   }
   const maxItemsToShow = Math.min(nftListings.length, 7);
 
+  const slidesPerView = 3; // Number of slides to move at once
 
   return (
     <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
@@ -175,21 +176,22 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         pt="10px"
         position="relative"
       >
-        <Box position="relative" mx="60px"> {/* Increased margin for more space */}
+        <Box position="relative" mx="60px">
           <Swiper
             modules={[Navigation]}
             onBeforeInit={(swiper) => {
               swiperRef.current = swiper;
             }}
             spaceBetween={20}
+            slidesPerGroup={slidesPerView} // Move 3 slides at a time
             breakpoints={{
-              1: { slidesPerView: 2, spaceBetween: 10 },
-              750: { slidesPerView: 3, spaceBetween: 10 },
-              980: { slidesPerView: 4, spaceBetween: 15 },
-              1200: { slidesPerView: 5, spaceBetween: 20 },
-              1600: { slidesPerView: 6, spaceBetween: 20 },
-              1800: { slidesPerView: 7, spaceBetween: 20 },
-              2100: { slidesPerView: 8, spaceBetween: 20 }
+              1: { slidesPerView: 2, spaceBetween: 10, slidesPerGroup: 2 },
+              750: { slidesPerView: 3, spaceBetween: 10, slidesPerGroup: 3 },
+              980: { slidesPerView: 4, spaceBetween: 15, slidesPerGroup: 3 },
+              1200: { slidesPerView: 5, spaceBetween: 20, slidesPerGroup: 3 },
+              1600: { slidesPerView: 6, spaceBetween: 20, slidesPerGroup: 3 },
+              1800: { slidesPerView: 7, spaceBetween: 20, slidesPerGroup: 3 },
+              2100: { slidesPerView: 8, spaceBetween: 20, slidesPerGroup: 3 }
             }}
             className="custom-swiper"
           >
@@ -208,23 +210,32 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                   flexDirection="column"
                 >
                   <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
-                    <Flex direction="column" height="100%">
-                    <Image 
-                      src={convertIpfsToHttp(nft.metadata.image)}
-                      alt={nft.metadata.name || `NFT #${nft.id}`} 
-                      width={190}
-                      height={190}
-                      objectFit="cover" 
-                      borderRadius="8px" 
-                      fallbackSrc="/Molder-01.jpg"
-                      onError={(e: any) => {
-                        const target = e.target as HTMLImageElement;
-                        console.error('Image load error:', target.src, 'NFT ID:', nft.id);
-                        target.onerror = null; // Prevent infinite loop
-                        target.src = '/Molder-01.jpg';
-                      }}
-                    />
-                      <Text fontWeight="bold" fontSize="lg" mt="10px" color="white">
+                    <Flex direction="column" height="100%" alignItems="center">
+                      <Box
+                        width="100%"
+                        height="190px"
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        overflow="hidden"
+                        borderRadius="8px"
+                      >
+                        <Image 
+                          src={convertIpfsToHttp(nft.metadata.image)}
+                          alt={nft.metadata.name || `NFT #${nft.id}`} 
+                          objectFit="cover"
+                          width="100%"
+                          height="100%"
+                          fallbackSrc="/Molder-01.jpg"
+                          onError={(e: any) => {
+                            const target = e.target as HTMLImageElement;
+                            console.error('Image load error:', target.src, 'NFT ID:', nft.id);
+                            target.onerror = null;
+                            target.src = '/Molder-01.jpg';
+                          }}
+                        />
+                      </Box>
+                      <Text fontWeight="bold" fontSize="lg" mt="10px" color="white" textAlign="center">
                         {nft.metadata.name}
                       </Text>
                     </Flex>
@@ -265,9 +276,9 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
             top="50%"
             transform="translateY(-50%)"
             zIndex="2"
-            bg="rgba(0, 0, 0, 0.5)"
+            bg="rgba(0, 0, 0, 0)"
             color="white"
-            _hover={{ bg: "rgba(0, 0, 0, 0.7)" }}
+            _hover={{ bg: "rgba(0, 0, 0, 0.2)" }}
             onClick={() => swiperRef.current?.slidePrev()}
           />
           <IconButton
@@ -278,9 +289,9 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
             top="50%"
             transform="translateY(-50%)"
             zIndex="2"
-            bg="rgba(0, 0, 0, 0.5)"
+            bg="rgba(0, 0, 0, 0)"
             color="white"
-            _hover={{ bg: "rgba(0, 0, 0, 0.7)" }}
+            _hover={{ bg: "rgba(0, 0, 0, 0.2)" }}
             onClick={() => swiperRef.current?.slideNext()}
           />
         </Box>

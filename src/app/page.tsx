@@ -14,7 +14,7 @@ import HomeHighlights3 from "@/components/HomeHighlights3";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import '@/consts/customstyles.css';
 import { keyframes } from "@emotion/react";
-
+import '@/styles/slider.css';
 const sliderSettings = {
   dots: false,
   infinite: true,
@@ -24,8 +24,9 @@ const sliderSettings = {
   autoplaySpeed: 7000,
   arrows: false,
   pauseOnHover: true,
-  fade: true,
-  cssEase: 'linear',
+  fade: false,
+  cssEase: 'cubic-bezier(0.45, 0, 0.55, 1)', // Smooth easing function
+  speed: 1000, // Transition duration in milliseconds
 };
 
 export default function Home() {
@@ -66,9 +67,11 @@ export default function Home() {
   }), [handleBeforeChange]);
 
   const memoizedNFTContracts = useMemo(() => NFT_CONTRACTS.map((item, index) => (
-    <Flex key={index} direction="column" justifyContent="center" height="100%">
-      {/* ... */}
-    </Flex>
+    <div key={index}>
+      <Flex direction="column" justifyContent="center" height="100%">
+        {/* ... */}
+      </Flex>
+    </div>
   )), []);
 
   const memoizedFeaturedCollections = useMemo(() => NFT_CONTRACTS.map((item, index) => (
@@ -244,6 +247,7 @@ export default function Home() {
           <Slider
             {...memoizedSliderSettings}
             ref={sliderRef}
+            className="custom-slider"
           >
             {memoizedNFTContracts}
           </Slider>
