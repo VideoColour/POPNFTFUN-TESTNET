@@ -20,11 +20,66 @@ import {
   useSwitchActiveWalletChain,
 } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
+import styled from "@emotion/styled";
+import { keyframes } from "@emotion/react";
 
 type Props = {
   listing: DirectListing;
   account: Account;
 };
+
+const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
+
+const scaleUp = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+const ShimmerButton = styled(Button)`
+  position: relative;
+  overflow: hidden;
+  background: #808080; // Grey background when not hovered
+  transition: all 0.4s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      transparent 100%
+    );
+    transition: all 0.5s ease;
+  }
+
+  &:hover {
+    background: linear-gradient(45deg, #ff00cc, #3333ff); // Gradient on hover
+    animation: ${scaleUp} 0.5s ease-in-out;
+  }
+
+  &:hover::before {
+    animation: ${shimmer} 1s infinite;
+  }
+`;
 
 const addChain = async () => {
   try {
@@ -57,7 +112,7 @@ export default function BuyFromListingButton(props: Props) {
   const toast = useToast();
 
   return (
-    <Button
+    <ShimmerButton
       onClick={async () => {
         if (activeChain?.id !== nftContract.chain.id) {
           try {
@@ -135,7 +190,6 @@ export default function BuyFromListingButton(props: Props) {
       }}
     >
       Buy
-    </Button>
+    </ShimmerButton>
   );
 }
-

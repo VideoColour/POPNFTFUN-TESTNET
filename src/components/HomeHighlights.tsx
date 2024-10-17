@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Text, Heading, Flex, Image, IconButton } from "@chakra-ui/react";
+import { Box, Text, Heading, Flex, Image, IconButton, Icon } from "@chakra-ui/react";
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
@@ -13,6 +13,7 @@ import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
+import { FiMoreHorizontal } from "react-icons/fi";
 const BuyNowButton = dynamic(() =>
   import("@/components/BuyNowButton").then((mod) => mod.default), {
     ssr: false,
@@ -80,6 +81,16 @@ const NFT_CONTRACT = {
   thumbnailUrl: "https://videocolour.art/assets/img/portfolio/gifs/GALACTIC-EYE-160-web-v5.gif",
   type: "ERC721",
 };
+
+// Add this custom icon component
+const MoreVerticalIcon = (props: any) => (
+  <Icon viewBox="0 0 24 24" {...props}>
+    <path
+      fill="currentColor"
+      d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+    />
+  </Icon>
+);
 
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
@@ -154,7 +165,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   const slidesPerView = 3; // Number of slides to move at once
 
   return (
-    <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
+    <Box mt="60px" textAlign="left" position="relative" className="custom-carousel">
       <Heading mb="30px">
         <ChakraNextLink
           href={`/collection/${nftContract.chain.id}/${nftContract.address}`}
@@ -170,100 +181,147 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         borderTop="1px solid"
         borderColor="rgb(222, 222, 222, 0.1)"
         marginBottom="25px"
-        paddingTop="10px"
-        mt="-20px"
+        paddingTop="30px"
+        mt="0px"
         mb="25px"
-        pt="10px"
         position="relative"
+        overflow="visible"
       >
-        <Box position="relative" mx="60px">
+        <Box position="relative" mx="60px" py="60px"> {/* Increased vertical padding */}
           <Swiper
             modules={[Navigation]}
             onBeforeInit={(swiper) => {
               swiperRef.current = swiper;
             }}
-            spaceBetween={20}
-            slidesPerGroup={slidesPerView} // Move 3 slides at a time
+            spaceBetween={0}
+            slidesPerGroup={slidesPerView}
             breakpoints={{
-              1: { slidesPerView: 2, spaceBetween: 10, slidesPerGroup: 2 },
-              750: { slidesPerView: 3, spaceBetween: 10, slidesPerGroup: 3 },
-              980: { slidesPerView: 4, spaceBetween: 15, slidesPerGroup: 3 },
-              1200: { slidesPerView: 5, spaceBetween: 20, slidesPerGroup: 3 },
-              1600: { slidesPerView: 6, spaceBetween: 20, slidesPerGroup: 3 },
-              1800: { slidesPerView: 7, spaceBetween: 20, slidesPerGroup: 3 },
-              2100: { slidesPerView: 8, spaceBetween: 20, slidesPerGroup: 3 }
+              1: { slidesPerView: 2, spaceBetween: 5, slidesPerGroup: 2 },
+              750: { slidesPerView: 3, spaceBetween: 5, slidesPerGroup: 3 },
+              980: { slidesPerView: 4, spaceBetween: 10, slidesPerGroup: 3 },
+              1200: { slidesPerView: 5, spaceBetween: 10, slidesPerGroup: 3 },
+              1600: { slidesPerView: 6, spaceBetween: 10, slidesPerGroup: 3 },
+              1800: { slidesPerView: 7, spaceBetween: 10, slidesPerGroup: 3 },
+              2100: { slidesPerView: 8, spaceBetween: 10, slidesPerGroup: 3 }
             }}
             className="custom-swiper"
           >
             {nftListings.map((nft, index) => (
               <SwiperSlide key={index}>
                 <Box
-                  rounded="12px"
-                  bg="rgb(33, 33, 33, 0.8)"
-                  border="1px solid rgb(222, 222, 222, 0.1)"
-                  p="15px"
+                  position="relative"
                   width="100%"
-                  height="340px"
-                  _hover={{ boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", transform: "scale(1.035)" }}
-                  transition="all 0.2s ease-in-out"
-                  display="flex"
-                  flexDirection="column"
+                  height="380px" // Increased height to accommodate hover effect
+                  overflow="visible"
+                  padding="6px 6px" // Added padding to create space for hover effect
                 >
-                  <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
-                    <Flex direction="column" height="100%" alignItems="center">
-                      <Box
-                        width="100%"
-                        height="190px"
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                        overflow="hidden"
-                        borderRadius="8px"
-                      >
-                        <Image 
-                          src={convertIpfsToHttp(nft.metadata.image)}
-                          alt={nft.metadata.name || `NFT #${nft.id}`} 
-                          objectFit="cover"
-                          width="100%"
-                          height="100%"
-                          fallbackSrc="/Molder-01.jpg"
-                          onError={(e: any) => {
-                            const target = e.target as HTMLImageElement;
-                            console.error('Image load error:', target.src, 'NFT ID:', nft.id);
-                            target.onerror = null;
-                            target.src = '/Molder-01.jpg';
-                          }}
-                        />
-                      </Box>
-                      <Text fontWeight="bold" fontSize="lg" mt="10px" color="white" textAlign="center">
-                        {nft.metadata.name}
-                      </Text>
-                    </Flex>
-                  </ChakraNextLink>
-                  <Flex justifyContent="space-between" alignItems="center" w="100%" mt="auto">
-                    <Box>
-                      <Text color="gray.300" fontSize="sm">Price</Text>
-                      {nft.currencyValuePerToken ? (
-                        <Text fontWeight="bold" fontSize="md" color="white">
-                          {nft.currencyValuePerToken.displayValue} {nft.currencyValuePerToken.symbol === "ETH" ? "MELD" : nft.currencyValuePerToken.symbol}
-                        </Text>
-                      ) : (
-                        <Text fontWeight="bold" fontSize="md" color="gray.500">
-                          Not Listed
-                        </Text>
-                      )}
-                    </Box>
-                    {listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString()) && (
-                      <Box>
-                        {account && (
-                          <BuyNowButton
-                            listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
-                            account={account}
+                  <Box
+                    rounded="12px"
+                    bg="rgba(28, 28, 28, 0.6)"
+                    border="1px solid rgb(222, 222, 222, 0.1)"
+                    p="15px"
+                    width="100%"
+                    height="340px"
+                    _hover={{ 
+                      boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", 
+                      transform: "scale(1.04)",
+                      zIndex: 10,
+                    }}
+                    transition="all 0.2s ease-in-out"
+                    display="flex"
+                    flexDirection="column"
+                  >
+                    <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
+                      <Flex direction="column" height="100%">
+                        <Box
+                          width="105%"
+                          transform="translate(-4.5px, -3.8px)"
+                          height="200px"
+                          display="flex"
+                          justifyContent="center"
+                          alignItems="center"
+                          overflow="hidden"
+                          borderRadius="8px"
+                        >
+                          <Image 
+                            src={convertIpfsToHttp(nft.metadata.image)}
+                            alt={nft.metadata.name || `NFT #${nft.id}`} 
+                            objectFit="cover"
+                            
+                            width="100%"
+                            height="100%"
+                            fallbackSrc="/Molder-01.jpg"
+                            onError={(e: any) => {
+                              const target = e.target as HTMLImageElement;
+                              console.error('Image load error:', target.src, 'NFT ID:', nft.id);
+                              target.onerror = null;
+                              target.src = '/Molder-01.jpg';
+                            }}
                           />
+                        </Box>
+                        <Flex justifyContent="space-between" alignItems="center" mt="10px" width="100%" px="0">
+                          <Heading 
+                            as="h3" 
+                            fontSize="xl" 
+                            color="white" 
+                            textAlign="left" 
+                            isTruncated 
+                            maxWidth="80%" 
+                            pl="2" 
+                            transform="translatex(-4px)"
+                          >
+                            {nft.metadata.name}
+                          </Heading>
+                          <IconButton
+                            aria-label="Options"
+                            icon={<Icon as={FiMoreHorizontal} />}
+                            size="sm"
+                            transform="translatex(12px)"
+                            variant="ghost"
+                            color="gray.300"
+                            _hover={{ color: "white" }}
+                            mr="2"
+                          />
+                        </Flex>
+                      </Flex>
+                    </ChakraNextLink>
+                    <Flex justifyContent="space-between" 
+                    alignItems="center" 
+                    w="108%" 
+                    mt="auto" 
+                    transform="translateX(-7.8px)"  
+                    border="1px solid rgb(222, 222, 222, 0.02)" 
+                    borderRadius="12px" 
+                    p="12px" 
+                    mb="-8px"
+                    bg="rgb(40, 40, 40, 0.8)"
+                    >
+                    
+                      <Box>
+                        
+                        <Text color="gray.300" fontSize="sm">Price</Text>
+                        {nft.currencyValuePerToken ? (
+                          <Text fontWeight="bold" fontSize="md" color="white">
+                            {nft.currencyValuePerToken.displayValue} {nft.currencyValuePerToken.symbol === "ETH" ? "MELD" : nft.currencyValuePerToken.symbol}
+                          </Text>
+                        ) : (
+                          <Text fontWeight="bold" fontSize="md" color="gray.500">
+                            Not Listed
+                          </Text>
                         )}
                       </Box>
-                    )}
-                  </Flex>
+                      {listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString()) && (
+                        <Box>
+                          {account && (
+                            <BuyNowButton
+                              listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
+                              account={account}
+                            />
+                          )}
+                        </Box>
+                      )}
+                    </Flex>
+                  </Box>
                 </Box>
               </SwiperSlide>
             ))}
