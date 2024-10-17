@@ -189,7 +189,7 @@ export default function Home() {
       <Box 
         width="90%" 
         position="relative" 
-        height={{ base: "30vh", sm: "40vh", md: "55vh", lg: "70vh", xl: "80vh" }}
+        height={{ base: "50vh", sm: "45vh", md: "55vh", lg: "70vh", xl: "80vh" }}
         borderRadius="lg"
         overflow="hidden"
       >
@@ -220,14 +220,14 @@ export default function Home() {
                 justifyContent="center" 
                 alignItems="center" 
                 height="100%"
-                transition="all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)"
+                transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
                 style={{ willChange: 'transform' }}
               >
                 <Image
                   src={item.thumbnailUrl}
                   alt={item.title}
-                  width={{ base: 300, sm: 180, md: 300, lg: 400, xl: 500 }}
-                  height={{ base: 300, sm: 180, md: 300, lg: 400, xl: 500 }}
+                  width={{ base: 150, sm: 180, md: 300, lg: 400, xl: 500 }}
+                  height={{ base: 150, sm: 180, md: 300, lg: 400, xl: 500 }}
                   className="collection-image"
                   style={{
                     borderRadius: "25px",
@@ -240,15 +240,39 @@ export default function Home() {
                   }}
                 />
                 <Heading 
-                  fontSize={{ base: "2xl", sm: "4xl", md: "4xl", lg: "5xl" }}
-                  mt={2}
-                  mb={4} 
+                  fontSize={{ base: "3xl", sm: "4xl", md: "4xl", lg: "5xl" }}
+                  mt={4}
+                  mb={2} 
                   color="white"
                   transition="transform 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
                   transform={expandedStates[index] ? 'translateY(-10px)' : 'translateY(0)'}
                 >
                   {item.title}
                 </Heading>
+                {/* Creator and circle image */}
+                <ChakraNextLink 
+                  href={item.profileUrl || "#"}
+                  _hover={{ textDecoration: 'none' }}
+                >
+                  <Flex 
+                    alignItems="center" 
+                    mt={2}
+                    mb={4}
+                    transition="all 0.2s"
+                    _hover={{ transform: 'scale(1.012',  }}
+                  >
+                    <Image
+                      src={item.avatarUrl || "/default-creator-image.jpg"}
+                      alt={`${item.name} avatar`}
+                      boxSize="40px"
+                      borderRadius="full"
+                      mr={2}
+                    />
+                    <Text color="white" fontSize="lg" fontWeight="bold">
+                      by {item.name || "Unknown Creator"}
+                    </Text>
+                  </Flex>
+                </ChakraNextLink>
                 <Flex 
                   direction="column"
                   alignItems="center" 
@@ -266,7 +290,7 @@ export default function Home() {
                     mb={2}
                   >
                     <Text 
-                      fontSize={{ base: "md", sm: "sm", md: "md", lg: "md", xl: "md" }} 
+                      fontSize={{ base: "sm", sm: "sm", md: "md", lg: "md", xl: "md" }} 
                       transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
                       style={{
                         display: '-webkit-box',
