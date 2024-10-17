@@ -439,8 +439,14 @@ export default function Home() {
         </MarketplaceProvider>
       </Box>
 
-      <Box width="90%" mt="20px" flexGrow={1} mb="80px">
+      <Box width="90%" mt="20px" flexGrow={1} mb="-50px">
         <MarketplaceProvider chainId="222000222" contractAddress="0xEdc67F3f52D9afd84D0487BD3b830a83c98FEe2B">
+          <HomeHighlights allValidListings={allValidListings || []} />
+        </MarketplaceProvider>
+      </Box>
+
+      <Box width="90%" mt="20px" flexGrow={1} mb="20px">
+        <MarketplaceProvider chainId="222000222" contractAddress="0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA">
           <HomeHighlights allValidListings={allValidListings || []} />
         </MarketplaceProvider>
       </Box>

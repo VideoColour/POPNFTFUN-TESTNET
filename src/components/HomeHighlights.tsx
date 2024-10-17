@@ -165,8 +165,8 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
   const slidesPerView = 3; // Number of slides to move at once
 
   return (
-    <Box mt="60px" textAlign="left" position="relative" className="custom-carousel">
-      <Heading mb="30px">
+    <Box mt="40px" textAlign="left" position="relative" className="custom-carousel">
+      <Heading mb="10px">
         <ChakraNextLink
           href={`/collection/${nftContract.chain.id}/${nftContract.address}`}
           color="white"
@@ -181,9 +181,9 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         borderTop="1px solid"
         borderColor="rgb(222, 222, 222, 0.1)"
         marginBottom="25px"
-        paddingTop="30px"
-        mt="0px"
-        mb="25px"
+        paddingTop="-30px"
+        mt="10px"
+        mb="-40px"
         position="relative"
         overflow="visible"
       >
@@ -202,7 +202,9 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
               1200: { slidesPerView: 5, spaceBetween: 10, slidesPerGroup: 3 },
               1600: { slidesPerView: 6, spaceBetween: 10, slidesPerGroup: 3 },
               1800: { slidesPerView: 7, spaceBetween: 10, slidesPerGroup: 3 },
-              2100: { slidesPerView: 8, spaceBetween: 10, slidesPerGroup: 3 }
+              2200: { slidesPerView: 8, spaceBetween: 10, slidesPerGroup: 3 },
+              2400: { slidesPerView: 9, spaceBetween: 10, slidesPerGroup: 3 },
+              2700: { slidesPerView: 10, spaceBetween: 10, slidesPerGroup: 3 },
             }}
             className="custom-swiper"
           >
@@ -224,7 +226,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                     height="340px"
                     _hover={{ 
                       boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", 
-                      transform: "scale(1.04)",
+                      transform: "scale(1.035)",
                       zIndex: 10,
                     }}
                     transition="all 0.2s ease-in-out"
@@ -235,7 +237,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                       <Flex direction="column" height="100%">
                         <Box
                           width="105%"
-                          transform="translate(-4.5px, -3.8px)"
+                          transform="translate(-5px, -4.2px)"
                           height="200px"
                           display="flex"
                           justifyContent="center"
