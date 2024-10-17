@@ -17,6 +17,7 @@ import {
   useColorMode,
   useDisclosure,
   useColorModeValue,
+  Icon,
 } from "@chakra-ui/react";
 import { useEffect, useRef } from "react";
 import { FaRegMoon, FaTwitter } from "react-icons/fa";
@@ -29,8 +30,14 @@ import {
 } from "thirdweb/react";
 import { FaDiscord, FaTelegramPlane, FaYoutube, FaInstagram } from "react-icons/fa"; 
 import { FaXTwitter } from "react-icons/fa6";
+import { ButtonProps } from "@chakra-ui/react/dist/types/button";
 
-export function SideMenu() {
+interface SideMenuProps {
+  buttonStyle?: ButtonProps;
+  iconSize?: number;
+}
+
+export function SideMenu({ buttonStyle, iconSize = 20 }: SideMenuProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
   const { disconnect } = useDisconnect();
@@ -47,14 +54,34 @@ export function SideMenu() {
     }
   }, [isOpen]);
 
+  const connectButtonStyle = {
+    height: "36px",
+    minWidth: "120px",
+    background: "rgba(255, 255, 255, 0.05)", 
+    color: "white", 
+    border: "1px solid rgba(255, 255, 255, 0.3)", 
+    borderRadius: "12px",
+    backdropFilter: "blur(12px)", 
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0)", 
+    transition: "all 0.2s ease-in-out",
+    fontSize: "14px",
+    fontFamily: "'BR Hendrix', sans-serif",
+    fontWeight: "600",
+    padding: "0 12px",
+    ':hover': {
+      background: "rgba(255, 255, 255, 0.15)",
+    },
+  };
+
   return (
     <>
       <Button
         display={{ md: "block", lg: "block",  base: "block" }}
         ref={btnRef}
         onClick={onOpen}
+        {...buttonStyle}
       >
-        <HamburgerIcon />
+        <Icon as={HamburgerIcon} boxSize={`${iconSize}px`} />
       </Button>
 
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
@@ -79,8 +106,16 @@ export function SideMenu() {
           </DrawerHeader>
 
           <DrawerBody display="flex" flexDirection="column" alignItems="flex-start" pl="20px">
-            <Box mb={8} display={{ md: "block", lg: "none", base: "block", }}>
-              <ConnectButton theme={colorMode} client={client} />
+            <Box mb={8} display={{ md: "block", lg: "none", base: "block" }}>
+              <ConnectButton
+                client={client}
+                connectModal={{ size: "wide" }}
+                theme={colorMode}
+                connectButton={{
+                  label: "Connect Wallet",
+                  style: connectButtonStyle,
+                }}
+              />
             </Box>
 
             <Flex flexDirection="column" gap={4} fontSize="lg" fontWeight="bold">

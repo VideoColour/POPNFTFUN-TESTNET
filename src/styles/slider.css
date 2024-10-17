@@ -1,15 +1,7 @@
 .custom-slider {
   position: relative;
   height: 100%;
-}
-
-.custom-slider .slick-slide {
-  opacity: 0;
-  transition: opacity 500ms linear;
-}
-
-.custom-slider .slick-slide.slick-active {
-  opacity: 1;
+  overflow: visible;
 }
 
 .custom-slider .slick-list,
@@ -17,13 +9,33 @@
   height: 100%;
 }
 
+.custom-slider .slick-slide {
+  position: relative;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.4s ease-out;
+}
+
+.custom-slider .slick-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 2s ease-in;
+}
+
+.custom-slider .slick-slide.slick-active + .slick-slide {
+  transform: translateX(100%);
+}
+
+.custom-slider .slick-slide.slick-active ~ .slick-slide {
+  transform: translateX(100%);
+}
+
 .custom-slider .slick-slide > div {
   height: 100%;
 }
 
-/* Add these new rules */
 .custom-slider .slick-list {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .custom-slider .slick-track {
@@ -31,30 +43,44 @@
   align-items: center;
 }
 
-.custom-slider .slick-slide {
-  flex: 0 0 auto;
-  height: auto;
-}
-
 .custom-slider .slide-item {
-  opacity: 0;
-  transition: opacity 0.7s ease;
-}
-
-.custom-slider .slick-active .slide-item {
-  opacity: 1;
-}
-
-.custom-slider .slick-active + .slick-slide .slide-item {
-  transform: translateX(-100%);
-}
-
-/* Add these new styles for background transition */
-.custom-slider .slick-slide {
-  position: relative;
-  z-index: 1;
+  height: 100%;
+  transition: opacity 0.4s ease-in-out;
 }
 
 .custom-slider .slick-current {
   z-index: 2;
 }
+
+/* Ensure background transitions smoothly */
+.bg-image {
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Hide non-active backgrounds */
+.bg-image:not(.active) {
+  opacity: 0 !important;
+}
+
+/* Show active background */
+.bg-image.active {
+  opacity: 0.2 !important;
+}
+
+/* Slide out the previous slide */
+.custom-slider .slick-active.slick-current + .slick-slide + .slick-slide {
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: opacity 0.4s ease-out, transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.collection-image {
+  will-change: opacity;
+}
+.slick-slide {
+    transition: opacity 0.3s ease-out;
+  }
+  
+  .slick-active {
+    transition: opacity 1s ease-in;
+  }

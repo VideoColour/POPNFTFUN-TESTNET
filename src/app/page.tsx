@@ -35,10 +35,12 @@ export default function Home() {
   const [listings, setListings] = useState(null);
   const [allValidListings, setAllValidListings] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [bgIndex, setBgIndex] = useState(0);
 
   const handleBeforeChange = (oldIndex: number, newIndex: number) => {
     setPrevIndex(oldIndex);
     setCurrentIndex(newIndex);
+    setBgIndex(newIndex);
   };
 
   const colorWave = keyframes`
@@ -71,17 +73,22 @@ export default function Home() {
 
   const sliderSettings = {
     dots: false,
-    infinite: true,
+    infinite: false,
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: false,
     arrows: false,
     fade: false,
-    cssEase: 'ease',
-    speed: 500,
-    beforeChange: handleBeforeChange,
+    speed: 850, // Faster slide transition
+    cssEase: 'cubic-bezier(0.3, 0.5, 0.3, 1)',
+    useCSS: true,
+    useTransform: true,
+    waitForAnimate: true,
+    beforeChange: (current: number, next: number) => {
+      console.log(`Changing from slide ${current} to ${next}`);
+    },
     afterChange: (current: number) => {
-      console.log(`Slide changed to ${current}`);
+      console.log(`Changed to slide ${current}`);
     },
   };
 
@@ -148,6 +155,26 @@ export default function Home() {
     </ChakraNextLink>
   )), []);
 
+  useEffect(() => {
+    const images = document.querySelectorAll('.collection-image');
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Fade in
+          (entry.target as HTMLElement).style.opacity = '1';
+        } else {
+          // Fade out
+          (entry.target as HTMLElement).style.opacity = '0';
+        }
+      });
+    }, { threshold: 0.5 });
+
+    images.forEach(img => observer.observe(img));
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <Flex direction="column" alignItems="center" width="100%">
       <Box 
@@ -157,35 +184,6 @@ export default function Home() {
         borderRadius="lg"
         overflow="hidden"
       >
-        <Box
-          position="absolute"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          backgroundImage={`url(${NFT_CONTRACTS[prevIndex]?.thumbnailUrl || "/home_creator_1.jpg"})`}
-          backgroundSize="cover"
-          backgroundPosition="center"
-          filter="blur(120px) saturate(2.2) contrast(1.4) brightness(1.4)"
-          opacity={0.3}
-          zIndex={-2}
-          transition="opacity 0.5s ease-in-out"
-        />
-        <Box
-          position="absolute"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          backgroundImage={`url(${NFT_CONTRACTS[currentIndex]?.thumbnailUrl || "/home_creator_1.jpg"})`}
-          backgroundSize="cover"
-          backgroundPosition="center"
-          filter="blur(120px) saturate(2.2) contrast(1.4) brightness(1.4)"
-          opacity={0.3}
-          zIndex={-1}
-          transition="opacity 0.5s ease-in-out"
-        />
-        
         <Slider
           {...sliderSettings}
           ref={sliderRef as React.RefObject<Slider>}
@@ -193,17 +191,42 @@ export default function Home() {
         >
           {NFT_CONTRACTS.map((item, index) => (
             <Box key={item.address || index} height="100%" className="slide-item">
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                bottom={0}
+                backgroundImage={`url(${item.thumbnailUrl || "/home_creator_1.jpg"})`}
+                backgroundSize="150% 120%"
+                backgroundPosition="center"
+                filter="blur(100px) saturate(1.5) contrast(1.2) brightness(1.2)"
+                opacity={0.5}
+                zIndex={-1}
+                transition="opacity 0.4s ease-in-out, background-image 0.4s ease-in-out"
+              />
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                bottom={0}
+                zIndex={-1}
+              />
               <Flex direction="column" justifyContent="center" alignItems="center" height="100%">
                 <Image
                   src={item.thumbnailUrl}
                   alt={item.title}
                   width={550}
                   height={550}
+                  className="collection-image"
                   style={{
                     borderRadius: "25px",
                     boxShadow: "2xl",
                     maxWidth: "100%",
                     height: "auto",
+                    opacity: 0, // Start with opacity 0
+                    transition: "opacity 1s ease-in, opacity 0.3s ease-out", // Slow fade in, fast fade out
                   }}
                 />
                 <Heading fontSize={{ base: "2xl", md: "4xl", lg: "5xl" }} mb={4} color="white">
@@ -240,6 +263,7 @@ export default function Home() {
                   textOverflow="ellipsis"
                   whiteSpace="normal"
                   display="-webkit-box"
+                  textAlign="center"
                   sx={{
                     WebkitLineClamp: isExpanded ? "none" : "2",
                     WebkitBoxOrient: "vertical",
@@ -247,11 +271,15 @@ export default function Home() {
                     maxHeight: isExpanded ? "none" : "3em",
                     minHeight: "3.2em",
                     paddingBottom: "-5em",
-                    transition: "all 0.3s ease-in-out",
+                    transition: "all 0.3s ease-in-out",  // Ensure this line is present
                     position: "relative",
                   }}
                 >
-                  <Text fontSize={{ base: "md", md: "md", lg: "md", xl: "md" }} mb={isExpanded ? 4 : 0}>
+                  <Text 
+                    fontSize={{ base: "md", md: "md", lg: "md", xl: "md" }} 
+                    mb={isExpanded ? 4 : 0}
+                    transition="all 0.3s ease-in-out"  // Add this line for smooth text transitions
+                  >
                     {item.description || "No description available."}
                   </Text>
                 </Box>
@@ -270,18 +298,21 @@ export default function Home() {
                       position="relative"
                       top="-40px"
                       zIndex={100}
+                      transition="all 0.3s ease-in-out"  // Add this line for smooth transitions
                     >
                       {isExpanded ? <ChevronUpIcon boxSize={5} /> : <ChevronDownIcon boxSize={5} />}
                     </Button>
                   </Flex>
                 )}
-                <Flex justifyContent="center" gap={4} mt={-2}>
-                  <ChakraNextLink href={`/collection/${item.chain?.id || 0}/${item.address || "#"}`}>
-                    <Button colorScheme="rgb(222, 222, 222, 0.5)" variant="outline" size="lg">
-                      Open Collection
-                    </Button>
-                  </ChakraNextLink>
-                </Flex>
+                <Box transition="all 0.3s ease-in-out">
+                  <Flex justifyContent="center" gap={4} mt={-2}>
+                    <ChakraNextLink href={`/collection/${item.chain?.id || 0}/${item.address || "#"}`}>
+                      <Button colorScheme="rgb(222, 222, 222, 0.5)" variant="outline" size="lg">
+                        Open Collection
+                      </Button>
+                    </ChakraNextLink>
+                  </Flex>
+                </Box>
               </Flex>
             </Box>
           ))}

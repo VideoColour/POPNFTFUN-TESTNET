@@ -23,6 +23,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { SideMenu } from "./SideMenu";
 import { NFT_CONTRACTS, NftContract } from "@/consts/nft_contracts";
+import { BlurredBackdrop } from './BlurredBackdrop';
 
 const menuItems = [
   { label: "EXPLORE", href: "/All-Collections" },
@@ -37,8 +38,60 @@ export function Navbar() {
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<NftContract[]>([]);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Remove the isSearchFocused state
+  // const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  const [isHovered, setIsHovered] = useState(false);
+
+  const buttonStyle = {
+    height: "36px",
+    minWidth: "120px",
+    background: "rgba(255, 255, 255, 0.05)", 
+    color: "white", 
+    border: "1px solid rgba(255, 255, 255, 0.3)", 
+    borderRadius: "12px",
+    backdropFilter: "blur(12px)", 
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0)", 
+    transition: "all 0.2s ease-in-out",
+    fontSize: "14px",
+    fontFamily: "'BR Hendrix', sans-serif",
+    fontWeight: "600",
+    padding: "0 12px",
+    ':hover': {
+      background: "rgba(255, 255, 255, 0.15)",
+    },
+  };
+
+  const sideMenuButtonStyle = {
+    bg: "transparent",
+    p: 0,
+    minW: "auto",
+    height: "50px", // Increased from 36px (36 * 1.4 ≈ 50)
+    width: "50px", // Increased to match height
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "12px",
+    transition: "all 0.2s ease-in-out",
+    _hover: {
+      bg: "rgba(25, 25, 25, 0.02)",
+    },
+  };
+
+  // Add a new style for the connected wallet button
+  const connectedWalletStyle = {
+    ...buttonStyle,
+    background: "transparent",
+    border: "none",
+    boxShadow: "none",
+    color: "white",
+    padding: "0",
+    minWidth: "auto",
+    borderRadius: "12px",
+    ':hover': {
+      background: "transparent",
+    },
+  };
 
   useEffect(() => {
     console.log("Navbar component mounted");
@@ -58,14 +111,11 @@ export function Navbar() {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value;
     setSearchQuery(query);
-    console.log("Search query changed:", query);
-
+    
     if (query.length > 0) {
       const results = fetchSearchResults(query);
-      console.log("Setting search results:", results);
       setSearchResults(results);
     } else {
-      console.log("Clearing search results");
       setSearchResults([]);
     }
   };
@@ -93,9 +143,10 @@ export function Navbar() {
       position="sticky"
       top="0"
       zIndex="1005"
+      bg="rgba(0, 0, 0, 0)"
       backdropFilter="blur(26px)"
-      bg="rgba(0, 0, 0, 0.02)"
-      boxShadow="0 4px 10px rgba(0, 0, 0, 0.02)"
+      WebkitBackdropFilter="blur(26px)"
+      boxShadow="0 4px 10px rgba(0, 0, 0, 0)"
     >
       <Flex direction="row" alignItems="center" justifyContent="space-between">
         <Flex alignItems="center" gap={1}>
@@ -151,12 +202,10 @@ export function Navbar() {
                 <FiSearch color="gray.300" />
               </InputLeftElement>
               <Input
-                ref={searchInputRef}
                 placeholder="Search for Collections"
                 fontSize={{ base: "13px", lg: "13px" }}
                 value={searchQuery}
                 onChange={handleSearchChange}
-                onFocus={() => setIsSearchFocused(true)}
                 bg="transparent" 
                 color="white"
                 borderRadius="999px"
@@ -168,44 +217,88 @@ export function Navbar() {
                 }}
               />
             </InputGroup>
-            {isSearchFocused && searchQuery && searchResults.length > 0 && (
+            {searchQuery && searchResults.length > 0 && (
               <Box
                 position="absolute"
-                top="45px"
+                top="100%"
                 left="0"
                 width="100%"
-                zIndex="20"
-                bg="rgba(20, 20, 20, 0.8)"
+                zIndex="1010"
                 borderRadius="8px"
                 maxHeight="300px"
                 overflowY="auto"
-                boxShadow="lg"
-                padding="10px"
-                border="1px solid rgba(255, 255, 255, 0.2)"
+                boxShadow="0 4px 10px rgba(0, 0, 0, 0.3)"
+                border="1px solid rgba(200, 200, 200, 0.2)"
               >
-                {searchResults.map((result, index) => (
-                  <Flex
-                    key={index}
-                    alignItems="center"
-                    p="10px"
-                    _hover={{
-                      bg: "rgba(15, 15, 15, 0.7)",
-                      borderRadius: "22px",
-                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-                    }}
-                    cursor="pointer"
-                    onClick={() => handleResultClick(result)}
-                  >
-                    <Image
-                      src={result.thumbnailUrl}
-                      alt={result.title ?? "Unknown"}
-                      borderRadius="full"
-                      boxSize="30px"
-                      mr="10px"
-                    />
-                    <Text color="white">{result.title ?? "Unknown"}</Text>
-                  </Flex>
-                ))}
+                <Box
+                  position="absolute"
+                  top="0"
+                  left="0"
+                  right="0"
+                  bottom="0"
+                  bg="rgba(32, 32, 32, 0.8)"
+                  css={{
+                    backdropFilter: "blur(25px)",
+                    WebkitBackdropFilter: "blur(25px)",
+                    '&::before': {
+                      content: '""',
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backdropFilter: "blur(5px)",
+                      WebkitBackdropFilter: "blur(5px)",
+                      zIndex: -1,
+                    }
+                  }}
+                  borderRadius="8px"
+                  zIndex="1"
+                />
+                <Box
+                  position="relative"
+                  zIndex="2"
+                  borderRadius="8px"
+                  border="1px solid rgba(255, 255, 255, 0.1)"
+                >
+                  {searchResults.map((result, index) => (
+                    <Flex
+                      key={index}
+                      alignItems="center"
+                      p="10px"
+                      position="relative"
+                      overflow="hidden"
+                      _hover={{
+                        "&::before": {
+                          content: '""',
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: "rgba(255, 255, 255, 0.05)",
+                          backdropFilter: "blur(10px)",
+                          WebkitBackdropFilter: "blur(10px)",
+                          borderRadius: "0px",
+                          zIndex: 1,
+                        }
+                      }}
+                      cursor="pointer"
+                      onClick={() => handleResultClick(result)}
+                    >
+                      <Box position="relative" zIndex="2" display="flex" alignItems="center" width="100%">
+                        <Image
+                          src={result.thumbnailUrl}
+                          alt={result.title ?? "Unknown"}
+                          borderRadius="full"
+                          boxSize="30px"
+                          mr="10px"
+                        />
+                        <Text color="white">{result.title ?? "Unknown"}</Text>
+                      </Box>
+                    </Flex>
+                  ))}
+                </Box>
               </Box>
             )}
           </Box>
@@ -271,26 +364,27 @@ export function Navbar() {
               connectModal={{ size: "wide" }}
               theme={colorMode}
               connectButton={{
-                style: {
-                  height: "36px",
-                  minWidth: "120px",
-                  background: "rgba(255, 255, 255, 0.1)", 
-                  color: "white", 
-                  border: "1px solid rgba(255, 255, 255, 0.3)", 
-                  borderRadius: "12px",
-                  backdropFilter: "blur(12px)", 
-                  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.3)", 
-                  transition: "all 0.2s ease-in-out",
-                },
+                label: "Connect Wallet",
+                style: buttonStyle,
+              }}
+              // Add custom styling for the connected wallet button
+              detailsButton={{
+                style: connectedWalletStyle,
               }}
             />
             <Box display={{ lg: "block" }} ml={6}>
-              <SideMenu />
+              <SideMenu 
+                buttonStyle={sideMenuButtonStyle}
+                iconSize={28} // Increased from 20 (20 * 1.4 ≈ 28)
+              />
             </Box>
           </Box>
         </Flex>
-        <Box display={{ md: "block", lg: "none", base: "block" }} >
-          <SideMenu />
+        <Box display={{ md: "block", lg: "none", base: "block" }}>
+          <SideMenu 
+            buttonStyle={sideMenuButtonStyle}
+            iconSize={28}
+          />
         </Box>
       </Flex>
     </Box>
