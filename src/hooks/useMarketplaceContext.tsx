@@ -21,8 +21,11 @@ import {
   getAllValidListings,
 } from "thirdweb/extensions/marketplace";
 import { useReadContract } from "thirdweb/react";
+import { useActiveWallet } from "thirdweb/react";
+import { useWallet } from "@/hooks/useWallet";
+import { useActiveAccount } from "thirdweb/react";
 
-export type NftType = "ERC1155" | "ERC721";
+export type NftType = 'ERC721' | 'ERC1155';
 
 const SUPPORT_AUCTION = false;
 
@@ -46,21 +49,27 @@ type TMarketplaceContext = {
   supplyInfo: SupplyInfo | undefined;
   supportedTokens: Token[];
   fetchListings: () => Promise<any>;
+  isWalletConnected: boolean;
+  wallet?: any; // Add this line
+  account: any;
 };
 
 const MarketplaceContext = createContext<TMarketplaceContext | undefined>(
   undefined
 );
 
+interface MarketplaceProviderProps {
+  chainId: string;
+  contractAddress: string;
+  children: ReactNode;
+  wallet?: any;
+}
+
 export default function MarketplaceProvider({
   chainId,
   contractAddress,
   children,
-}: {
-  chainId: string;
-  contractAddress: string;
-  children: ReactNode;
-}) {
+}: MarketplaceProviderProps) {
   console.log("MarketplaceProvider initialized with chainId:", chainId, "and contractAddress:", contractAddress);
 
   let _chainId: number;
@@ -168,6 +177,9 @@ export default function MarketplaceProvider({
       (item) => item.chain.id === marketplaceContract.chain.id
     )?.tokens || [];
 
+  const { isWalletConnected, wallet } = useWallet();
+  const account = useActiveAccount();
+
   // Log the context values to confirm
   console.log("Marketplace Context Values:", {
     marketplaceContract: marketplace,
@@ -187,25 +199,27 @@ export default function MarketplaceProvider({
     const listings = await getAllValidListings({ contract: marketplace });
     return listings;
   };
+  const value: TMarketplaceContext = {
+    marketplaceContract: marketplace,
+    nftContract: contract,
+    isLoading,
+    type: is1155 ? "ERC1155" : "ERC721",
+    wallet,
+    allValidListings,
+    allAuctions,
+    contractMetadata,
+    refetchAllListings,
+    isRefetchingAllListings,
+    listingsInSelectedCollection,
+    supplyInfo,
+    supportedTokens,
+    fetchListings,
+    isWalletConnected,
+    account,
+  };
+
   return (
-    <MarketplaceContext.Provider
-      value={{
-        marketplaceContract: marketplace,
-        nftContract: contract,
-        isLoading,
-        type: is1155 ? "ERC1155" : "ERC721",
-        allValidListings,
-        allAuctions,
-        contractMetadata,
-        refetchAllListings,
-        isRefetchingAllListings,
-        listingsInSelectedCollection,
-        supplyInfo,
-        supportedTokens,
-        fetchListings,
-        
-      }}
-    >
+    <MarketplaceContext.Provider value={value}>
       {children}
       {isLoading && (
         <Box
@@ -224,14 +238,11 @@ export default function MarketplaceProvider({
   );
 }
 
-export function useMarketplaceContext() {
+export function useMarketplaceContext(): TMarketplaceContext {
   const context = useContext(MarketplaceContext);
-  if (context === undefined) {
-    console.error("useMarketplaceContext called outside of MarketplaceProvider.");
-    throw new Error(
-      "useMarketplaceContext must be used inside MarketplaceProvider"
-    );
+  if (!context) {
+    throw new Error("useMarketplaceContext must be used within a MarketplaceProvider");
   }
-  console.log("useMarketplaceContext accessed with context:", context);
   return context;
 }
+

@@ -312,15 +312,15 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
                           </Text>
                         )}
                       </Box>
-                      {listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString()) && (
-                        <Box>
-                          {account && (
-                            <BuyNowButton
-                              listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
-                              account={account}
-                            />
-                          )}
-                        </Box>
+                      {account && nft.currencyValuePerToken ? (
+                        <BuyNowButton
+                          listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
+                          account={account}
+                        />
+                      ) : (
+                        <Text fontSize="sm" color="gray.500">
+                          {account ? "Not for sale" : "Connect wallet to buy"}
+                        </Text>
                       )}
                     </Flex>
                   </Box>

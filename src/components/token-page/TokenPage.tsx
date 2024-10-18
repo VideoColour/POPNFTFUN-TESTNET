@@ -34,7 +34,7 @@ import {
  ThirdwebProvider,
 } from "thirdweb/react";
 import { getAllListings, getAllOffers, makeOffer, buyFromListing } from "thirdweb/extensions/marketplace";
-import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
+import MarketplaceProvider, { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import dynamic from "next/dynamic";
 import RelatedListings from "./RelatedListings";
 import { NftDetails } from "./NftDetails";
@@ -50,6 +50,9 @@ import { shortenAddress } from "thirdweb/utils";
 import { CreateListing } from "./CreateListing";
 import { Offer as ThirdwebOffer } from "thirdweb/extensions/marketplace";
 import { DirectListing } from "thirdweb/extensions/marketplace";
+import { useActiveWallet, useConnectModal } from "thirdweb/react";
+import { client } from "@/consts/client";
+import { Wallet } from "thirdweb/wallets";
 const CancelListingButton = dynamic(() => import("./CancelListingButton"), {
   ssr: false,
 });
@@ -59,12 +62,27 @@ const BuyFromListingButton = dynamic(() => import("./BuyFromListingButton"), {
 
 type Props = {
   tokenId: bigint;
+  activeWallet?: Wallet<any>; // Adjust the type as needed
+
 };
 
 export function Token(props: Props) {
+  const { connect } = useConnectModal();
+  const activeWallet = useActiveWallet();
+
+  useEffect(() => {
+    if (!activeWallet) {
+      console.log("No active wallet");
+      // Remove the automatic connection attempt
+      // connect({ client });
+    } else {
+      console.log("Wallet is connected:", activeWallet);
+    }
+  }, [activeWallet]);
+
   return (
-    <ThirdwebProvider >
-      <TokenContent {...props} />
+    <ThirdwebProvider>
+      <TokenContent {...props} activeWallet={activeWallet} />
     </ThirdwebProvider>
   );
 }
@@ -152,8 +170,7 @@ async function purchaseFromListing(params: ListingParams, listingId: string, qua
   }
 }
 
-function TokenContent(props: Props) {
-  const { tokenId } = props;
+function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) {
   const [listingsData, setListingsData] = useState<DirectListing[]>([]);
   const [offersData, setOffersData] = useState<Offer[]>([]);
 
@@ -789,7 +806,12 @@ function TokenContent(props: Props) {
         )}
       </Box>
       <Box width="100%" mt="270px" flexGrow={1} mb="15px">
-        <RelatedListings excludedListingId={listings[0]?.id ?? -1n} />
+      <MarketplaceProvider chainId="222000222" contractAddress="0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA" wallet={activeWallet}>
+  <RelatedListings 
+    excludedListingId={listings[0]?.id ? BigInt(listings[0].id) : BigInt(-1)} 
+    activeWallet={activeWallet}
+  />
+</MarketplaceProvider>
       </Box>
 
     </Flex>

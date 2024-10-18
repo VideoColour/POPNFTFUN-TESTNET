@@ -1,4 +1,4 @@
-import { client } from "@/consts/client";
+import { client, provider } from "@/consts/client";
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import { Button, useToast } from "@chakra-ui/react";
 import {
@@ -20,6 +20,7 @@ import {
   buyFromListing,
 } from "thirdweb/extensions/marketplace";
 import type { Account } from "thirdweb/wallets";
+import { formatUnits } from "ethers";
 
 type Props = {
   listing: DirectListing;
@@ -56,86 +57,42 @@ export default function BuyFromListingButton(props: Props) {
   const activeChain = useActiveWalletChain();
   const toast = useToast();
 
+  const handleClick = async () => {
+    if (!account || !listing) return;
+
+    try {
+      // Check user's balance
+      const balance = await provider.getBalance(account.address);
+      const price = listing.currencyValuePerToken.value;
+      const formattedBalance = formatUnits(balance, 18);
+      const formattedPrice = formatUnits(price, 18);
+
+      if (parseFloat(formattedBalance) < parseFloat(formattedPrice)) {
+        console.error("Insufficient balance");
+        // Show an error message to the user
+        return;
+      }
+
+      // Proceed with the transaction if balance is sufficient
+      const transaction = await buyFromListing({
+        listingId: listing.id,
+        quantity: 1n,
+        contract: marketplaceContract,
+        recipient: account.address
+      });
+
+      console.log("Purchase successful", transaction);
+    } catch (error) {
+      console.error("Error buying from listing:", error);
+      // Show an error message to the user
+    }
+  };
+
   return (
     <Button
-      onClick={async () => {
-        if (activeChain?.id !== nftContract.chain.id) {
-          try {
-            await switchChain(nftContract.chain);
-          } catch (error) {
-            console.error("Switch chain error:", error);
-            await addChain();
-          }
-        }
-
-        try {
-          if (
-            listing.currencyContractAddress.toLowerCase() !==
-            NATIVE_TOKEN_ADDRESS.toLowerCase()
-          ) {
-            const customTokenContract = getContract({
-              address: listing.currencyContractAddress as Hex,
-              client,
-              chain: nftContract.chain,
-            });
-
-            const result = await allowance({
-              contract: customTokenContract,
-              owner: account.address,
-              spender: marketplaceContract.address as Hex,
-            });
-
-            if (result < listing?.pricePerToken) {
-              const _decimals = await decimals({ contract: customTokenContract });
-              const transaction = approve({
-                contract: customTokenContract,
-                spender: marketplaceContract.address as Hex,
-                amount: toTokens(listing?.pricePerToken, _decimals),
-              });
-              await sendAndConfirmTransaction({ transaction, account });
-            }
-          }
-
-          const transaction = buyFromListing({
-            contract: marketplaceContract,
-            listingId: listing.id,
-            quantity: listing.quantity,
-            recipient: account.address,
-          });
-
-          const receipt = await sendTransaction({ transaction, account });
-          await waitForReceipt({
-            transactionHash: receipt.transactionHash,
-            client,
-            chain: nftContract.chain,
-          });
-
-          toast({
-            title: "Purchase completed! The asset(s) should arrive in your account shortly.",
-            status: "success",
-            duration: 4000,
-            isClosable: true,
-          });
-
-          refetchAllListings();
-        } catch (err) {
-          console.error(err);
-          if ((err as Error).message.startsWith("insufficient funds for gas")) {
-            toast({
-              title: "You don't have enough funds for this purchase.",
-              description: `Make sure you have enough gas for the transaction + ${listing.currencyValuePerToken.displayValue} ${
-                listing.currencyValuePerToken.symbol === "ETH" ? "MELD" : listing.currencyValuePerToken.symbol
-              }`,
-              status: "error",
-              isClosable: true,
-              duration: 7000,
-            });
-          }
-        }
-      }}
+      onClick={handleClick}
     >
       Buy
     </Button>
   );
 }
-

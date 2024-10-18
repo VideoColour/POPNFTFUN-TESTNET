@@ -1,4 +1,5 @@
 import { createThirdwebClient } from "thirdweb";
+import { ethers } from "ethers";
 
 const meldTestnet = {
   name: "Meld Testnet",
@@ -29,3 +30,7 @@ export const client = createThirdwebClient({
 });
 
 export { meldTestnet };
+
+// Ensure that the private key is securely stored and not exposed in client-side code
+export const privateKey = process.env.PRIVATE_KEY; // Ensure this is set in your environment
+export const provider = new ethers.JsonRpcProvider("https://testnet-rpc.meld.com");
