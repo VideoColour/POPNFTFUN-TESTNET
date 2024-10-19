@@ -8,8 +8,6 @@ import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
 import { FaPlay, FaPause, FaTelegramPlane, FaExclamationTriangle } from "react-icons/fa";
 import { FaRegFileLines, FaXTwitter } from "react-icons/fa6";
 
-import HomeHighlights2 from "@/components/HomeHighlights2";
-import HomeHighlights3 from "@/components/HomeHighlights3";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import '@/consts/customstyles.css';
 import { keyframes } from "@emotion/react";

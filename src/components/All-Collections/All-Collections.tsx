@@ -51,7 +51,7 @@ export default function Home() {
                   borderRadius="12px"
                   objectFit="cover"
                 />
-                <Text fontSize="large" mt="10px" textAlign="center">
+                <Text fontSize="md" mt="10px" textAlign="center">
                   {item.title}
                 </Text>
               </ChakraNextLink>
