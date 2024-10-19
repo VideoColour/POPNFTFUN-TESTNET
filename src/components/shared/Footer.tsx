@@ -29,9 +29,9 @@ export function Footer() {
             isExternal
             fontWeight="600"
             ml={1}
-            _hover={{ color: "rgba(229, 27, 68)" }}
+            _hover={{ color: "#e66465" }}
             _focus={{ boxShadow: "none" }}
-            textDecoration="none"
+            textDecoration="none"   
           >
             Feedback
           </Link>
@@ -40,15 +40,15 @@ export function Footer() {
         <Flex mt={{ base: 0, md: 0 }} gap={4} w={{ base: "auto", md: "auto" }} justifyContent={{ base: "center", md: "center" }}>
           <Link
            href="/All-Collections"
-           _hover={{ color: "rgba(229, 27, 68)" }}
-            _focus={{ boxShadow: "none" }}
+           _hover={{ color: "#e66465" }}
+           _focus={{ boxShadow: "none" }}
             textDecoration="none"
           >
             Explore
           </Link>
           <Link
             href="https://www.meldhive.com/"
-            _hover={{ color: "rgba(229, 27, 68)" }}
+            _hover={{ color: "#9198e5" }}
             _focus={{ boxShadow: "none" }}
             textDecoration="none"
           >
@@ -56,7 +56,7 @@ export function Footer() {
           </Link>
           <Link
             href="/profile"
-            _hover={{ color: "rgba(229, 27, 68)" }}
+            _hover={{ color: "#e66465" }}
             _focus={{ boxShadow: "none" }}
             textDecoration="none"
           >
@@ -78,7 +78,7 @@ export function Footer() {
             as="span"
             fontWeight="bold"
             color="white"
-            _hover={{ color: "rgba(229, 27, 68)" }}
+            _hover={{ color: "#e66465" }}
           >
             Thirdweb
           </Text>

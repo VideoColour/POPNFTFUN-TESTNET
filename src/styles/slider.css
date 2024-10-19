@@ -1,55 +1,31 @@
 .custom-slider {
   position: relative;
   height: 100%;
-  overflow: visible;
 }
 
 .custom-slider .slick-list,
-.custom-slider .slick-track {
+.custom-slider .slick-track,
+.custom-slider .slick-slide > div {
   height: 100%;
 }
 
 .custom-slider .slick-slide {
   position: relative;
-  opacity: 0;
-  transform: translateX(100%);
-  transition: opacity 0.4s ease-out;
+  overflow: hidden;
 }
 
-.custom-slider .slick-active {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 2s ease-in;
-}
-
-.custom-slider .slick-slide.slick-active + .slick-slide {
-  transform: translateX(100%);
-}
-
-.custom-slider .slick-slide.slick-active ~ .slick-slide {
-  transform: translateX(100%);
-}
-
-.custom-slider .slick-slide > div {
+.custom-slider .slide-item {
   height: 100%;
+  position: relative;
 }
 
 .custom-slider .slick-list {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .custom-slider .slick-track {
   display: flex;
   align-items: center;
-}
-
-.custom-slider .slide-item {
-  height: 100%;
-  transition: opacity 0.4s ease-in-out;
-}
-
-.custom-slider .slick-current {
-  z-index: 2;
 }
 
 /* Ensure background transitions smoothly */

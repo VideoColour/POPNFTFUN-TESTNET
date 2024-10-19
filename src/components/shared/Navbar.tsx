@@ -13,6 +13,7 @@ import {
   InputGroup,
   InputLeftElement,
   Input,
+  ButtonProps,
 } from "@chakra-ui/react";
 import { FiSearch } from "react-icons/fi";
 import {
@@ -46,35 +47,66 @@ export function Navbar() {
   const buttonStyle = {
     height: "36px",
     minWidth: "120px",
-    background: "rgba(255, 255, 255, 0.05)", 
-    color: "white", 
-    border: "1px solid rgba(255, 255, 255, 0.3)", 
-    borderRadius: "12px",
-    backdropFilter: "blur(12px)", 
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0)", 
-    transition: "all 0.2s ease-in-out",
+    background: "transparent",
+    color: "white",
+    border: "1px solid gray",
+    borderRadius: "full",
+    backdropFilter: "blur(12px)",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0)",
+    transition: "all 0.3s ease",
     fontSize: "14px",
     fontFamily: "'BR Hendrix', sans-serif",
     fontWeight: "600",
     padding: "0 12px",
-    ':hover': {
-      background: "rgba(255, 255, 255, 0.15)",
+    pos: "relative", // Changed from 'position' to 'pos'
+    _hover: {
+      textDecoration: "none",
+      borderColor: "transparent",
+      _before: {
+        content: '""',
+        pos: "absolute", // Changed from 'position' to 'pos'
+        top: "-2px",
+        left: "-2px",
+        right: "-2px",
+        bottom: "-2px",
+        background: "linear-gradient(90deg, #ff00cc, #333399)",
+        borderRadius: "inherit",
+        filter: "blur(50px)",
+        opacity: 0.1,
+        zIndex: -1,
+      },
+      _after: {
+        content: '""',
+        pos: "absolute", // Changed from 'position' to 'pos'
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: "inherit",
+        border: "2px solid transparent",
+        background: "linear-gradient(90deg, #ff00cc, #333399) border-box",
+        WebkitMask: 
+          "linear-gradient(#fff 0 0) padding-box, " +
+          "linear-gradient(#fff 0 0)",
+        WebkitMaskComposite: "destination-out",
+        maskComposite: "exclude",
+      }
     },
   };
 
-  const sideMenuButtonStyle = {
+  const sideMenuButtonStyle: React.ComponentProps<typeof Button> = {
     bg: "transparent",
     p: 0,
     minW: "auto",
-    height: "50px", // Increased from 36px (36 * 1.4 ≈ 50)
-    width: "50px", // Increased to match height
+    h: "50px",
+    w: "50px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: "12px",
-    transition: "all 0.2s ease-in-out",
+    transition: "all 0.3s ease",
     _hover: {
-      bg: "rgba(25, 25, 25, 0.02)",
+      bg: "transparent",
     },
   };
 
@@ -341,20 +373,64 @@ export function Navbar() {
               href="/profile"
               variant="outline"
               height="36px"
-              width="110px"
-              display={{  lg: "flex", base: "none" }}
+              minWidth="120px"
+              display={{ lg: "flex", base: "none" }}
               px={4}
               fontFamily="'BR Hendrix', sans-serif"
-              fontWeight="650"
-              bg={pathname === "/profile" ? "rgba(203, 26, 79)" : "transparent"}
+              fontWeight="600"
+              fontSize="14px"
+              position="relative"
+              color="white"
+              bg="transparent"
+              border="1px solid gray"
+              borderRadius="full"
               _hover={{
-                bg: pathname === "/profile" ? "rgba(203, 26, 79)" : "rgba(203, 26, 79)",
-                textDecoration: "none",
+                textDecoration: "none",  // Add this line to prevent text underline on hover
+                borderColor: "transparent",
+                _before: {
+                  content: '""',
+                  position: "absolute",
+                  top: "-2px",
+                  left: "-2px",
+                  right: "-2px",
+                  bottom: "-2px",
+                  background: "linear-gradient(90deg, #ff00cc, #333399)",
+                  borderRadius: "inherit",
+                  filter: "blur(50px)",
+                  opacity: 0.1,
+                  zIndex: -1,
+                },
+                _after: {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: "inherit",
+                  border: "2px solid transparent",
+                  background: "linear-gradient(90deg, #ff00cc, #333399) border-box",
+                  WebkitMask: 
+                    "linear-gradient(#fff 0 0) padding-box, " +
+                    "linear-gradient(#fff 0 0)",
+                  WebkitMaskComposite: "destination-out",
+                  maskComposite: "exclude",
+                }
               }}
-              _focus={{ boxShadow: "none" }}
-              _active={{ textDecoration: "none" }}
+              transition="all 0.3s ease"
             >
-              Owned NFTs
+              <Box
+                as="span"
+                position="relative"
+                zIndex="2"
+                textShadow="0 0 0 transparent"
+                transition="text-shadow 0.3s ease"
+                _groupHover={{
+                  textShadow: "0 0 0 white",
+                }}
+              >
+                Owned NFTs
+              </Box>
             </Button>
           )}
           <Box display={{  lg: "flex", base: "none" }} 
@@ -367,15 +443,21 @@ export function Navbar() {
                 label: "Connect Wallet",
                 style: buttonStyle,
               }}
-              // Add custom styling for the connected wallet button
               detailsButton={{
-                style: connectedWalletStyle,
+                style: {
+                  ...buttonStyle,
+                  background: "transparent",
+                  border: "none",
+                  boxShadow: "none",
+                  padding: "0",
+                  minWidth: "auto",
+                },
               }}
             />
             <Box display={{ lg: "block" }} ml={6}>
               <SideMenu 
                 buttonStyle={sideMenuButtonStyle}
-                iconSize={28} // Increased from 20 (20 * 1.4 ≈ 28)
+                iconSize={28}
               />
             </Box>
           </Box>

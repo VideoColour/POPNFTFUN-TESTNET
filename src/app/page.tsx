@@ -14,6 +14,8 @@ import { keyframes } from "@emotion/react";
 import '@/styles/slider.css';
 import dynamic from 'next/dynamic';
 import { debounce } from 'lodash';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Global, css } from "@emotion/react";
 const HomeHighlights = dynamic(() => import('@/components/HomeHighlights'), { ssr: false });
 const MarketplaceProvider = dynamic(() => import('@/hooks/useMarketplaceContext'), { ssr: false });
 
@@ -26,6 +28,12 @@ interface CustomSlider extends Slider {
   slickGoTo(slideNumber: number, dontAnimate?: boolean): void;
 }
 
+const glowing = keyframes`
+  0% { background-position: 0 0; }
+  50% { background-position: 400% 0; }
+  100% { background-position: 0 0; }
+`;
+
 export default function Home() {
   const sliderRef = useRef<CustomSlider | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -35,11 +43,15 @@ export default function Home() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [bgIndex, setBgIndex] = useState(0);
   const [expandedStates, setExpandedStates] = useState(NFT_CONTRACTS.map(() => false));
+  const [bgImage, setBgImage] = useState(NFT_CONTRACTS[0].thumbnailUrl);
+  const [direction, setDirection] = useState(0);
 
   const handleBeforeChange = (oldIndex: number, newIndex: number) => {
     setPrevIndex(oldIndex);
     setCurrentIndex(newIndex);
     setBgIndex(newIndex);
+    setBgImage(NFT_CONTRACTS[newIndex].thumbnailUrl);
+    setDirection(newIndex > oldIndex ? 1 : -1);
   };
 
   const colorWave = keyframes`
@@ -78,14 +90,12 @@ export default function Home() {
     autoplay: false,
     arrows: false,
     fade: false,
-    speed: 850, // Faster slide transition
+    speed: 850,
     cssEase: 'cubic-bezier(0.3, 0.5, 0.3, 1)',
     useCSS: true,
     useTransform: true,
     waitForAnimate: true,
-    beforeChange: (current: number, next: number) => {
-      console.log(`Changing from slide ${current} to ${next}`);
-    },
+    beforeChange: handleBeforeChange,
     afterChange: (current: number) => {
       console.log(`Changed to slide ${current}`);
     },
@@ -182,8 +192,32 @@ export default function Home() {
     });
   }, []);
 
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+  };
+
   return (
     <Flex direction="column" alignItems="center" width="100%">
+      <Global
+        styles={css`
+          @keyframes glowing {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+          }
+        `}
+      />
       <Box 
         width="90%" 
         position="relative" 
@@ -191,6 +225,29 @@ export default function Home() {
         borderRadius="lg"
         overflow="hidden"
       >
+        {/* Background image */}
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
+            key={bgImage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `url(${bgImage})`,
+              backgroundSize: '150% 120%',
+              backgroundPosition: 'center',
+              filter: 'blur(100px) saturate(1.5) contrast(1.2) brightness(1.2)',
+              zIndex: -1,
+            }}
+          />
+        </AnimatePresence>
+
         <Slider
           {...sliderSettings}
           ref={sliderRef as React.RefObject<Slider>}
@@ -198,127 +255,194 @@ export default function Home() {
         >
           {NFT_CONTRACTS.map((item, index) => (
             <Box key={item.address || index} height="100%" className="slide-item">
-              {/* Background image */}
-              <Box
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                bottom={0}
-                backgroundImage={`url(${item.thumbnailUrl || "/home_creator_1.jpg"})`}
-                backgroundSize="150% 120%"
-                backgroundPosition="center"
-                filter="blur(100px) saturate(1.5) contrast(1.2) brightness(1.2)"
-                opacity={0.5}
-                zIndex={-1}
-                transition="opacity 0.4s ease-in-out, background-image 0.4s ease-in-out"
-              />
-              <Flex 
-                direction="column" 
-                justifyContent="center" 
-                alignItems="center" 
-                height="100%"
-                transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
-                style={{ willChange: 'transform' }}
-              >
-                <Image
-                  src={item.thumbnailUrl}
-                  alt={item.title}
-                  width={{ base: 150, sm: 180, md: 300, lg: 400, xl: 500 }}
-                  height={{ base: 150, sm: 180, md: 300, lg: 400, xl: 500 }}
-                  className="collection-image"
-                  style={{
-                    borderRadius: "25px",
-                    boxShadow: "2xl",
-                    maxWidth: "100%",
-                    height: "auto",
-                    opacity: 0,
-                    transition: "opacity 1s ease-in, opacity 0.3s ease-out, transform 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)",
-                    transform: expandedStates[index] ? 'translateY(-20px)' : 'translateY(0)',
+              <AnimatePresence initial={false} custom={direction}>
+                <motion.div
+                  key={index}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{
+                    x: { type: "spring", stiffness: 300, damping: 30 },
+                    opacity: { duration: 0.5 }
                   }}
-                />
-                <Heading 
-                  fontSize={{ base: "3xl", sm: "4xl", md: "4xl", lg: "5xl" }}
-                  mt={4}
-                  mb={2} 
-                  color="white"
-                  transition="transform 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
-                  transform={expandedStates[index] ? 'translateY(-10px)' : 'translateY(0)'}
-                >
-                  {item.title}
-                </Heading>
-                {/* Creator and circle image */}
-                <ChakraNextLink 
-                  href={item.profileUrl || "#"}
-                  _hover={{ textDecoration: 'none' }}
+                  style={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
                 >
                   <Flex 
+                    direction="column" 
+                    justifyContent="center" 
                     alignItems="center" 
-                    mt={2}
-                    mb={4}
-                    transition="all 0.2s"
-                    _hover={{ transform: 'scale(1.012',  }}
+                    height="100%"
+                    width="100%"
                   >
                     <Image
-                      src={item.avatarUrl || "/default-creator-image.jpg"}
-                      alt={`${item.name} avatar`}
-                      boxSize="40px"
-                      borderRadius="full"
-                      mr={2}
-                    />
-                    <Text color="white" fontSize="lg" fontWeight="bold">
-                      by {item.name || "Unknown Creator"}
-                    </Text>
-                  </Flex>
-                </ChakraNextLink>
-                <Flex 
-                  direction="column"
-                  alignItems="center" 
-                  justifyContent="center" 
-                  transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
-                >
-                  <Box
-                    maxW="600px"
-                    color="gray.200"
-                    overflow="hidden"
-                    textAlign="center"
-                    height={expandedStates[index] ? "auto" : "3em"}
-                    opacity={1}
-                    transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
-                    mb={2}
-                  >
-                    <Text 
-                      fontSize={{ base: "sm", sm: "sm", md: "md", lg: "md", xl: "md" }} 
-                      transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
+                      src={item.thumbnailUrl}
+                      alt={item.title}
+                      width={{ base: 150, sm: 180, md: 300, lg: 400, xl: 500 }}
+                      height={{ base: 150, sm: 180, md: 300, lg: 400, xl: 500 }}
+                      className="collection-image"
                       style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: expandedStates[index] ? 'unset' : 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
+                        borderRadius: "25px",
+                        boxShadow: "2xl",
+                        maxWidth: "100%",
+                        height: "auto",
+                        transition: "transform 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)",
+                        transform: expandedStates[index] ? 'translateY(-20px)' : 'translateY(0)',
                       }}
+                    />
+                    <Heading 
+                      fontSize={{ base: "3xl", sm: "4xl", md: "4xl", lg: "5xl" }}
+                      mt={4}
+                      mb={2} 
+                      color="white"
+                      transition="transform 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
+                      transform={expandedStates[index] ? 'translateY(-10px)' : 'translateY(0)'}
                     >
-                      {item.description || "No description available."}
-                    </Text>
-                  </Box>
-                  {item.description && item.description.split(" ").length > 20 && (
-                    <Button
-                      size="sm"
-                      color="gray.300"
-                      backgroundColor="transparent"
-                      _hover={{ bg: "rgba(255, 255, 255, 0.1)" }}
-                      onClick={() => handleExpandClick(index)}
-                      mb={2}
+                      {item.title}
+                    </Heading>
+                    {/* Creator and circle image */}
+                    <ChakraNextLink 
+                      href={item.profileUrl || "#"}
+                      _hover={{ textDecoration: 'none' }}
                     >
-                      {expandedStates[index] ? <ChevronUpIcon boxSize={5} /> : <ChevronDownIcon boxSize={5} />}
-                    </Button>
-                  )}
-                  <ChakraNextLink href={`/collection/${item.chain?.id || 0}/${item.address || "#"}`}>
-                    <Button colorScheme="rgb(222, 222, 222, 0.5)" variant="outline" size="lg">
-                      Open Collection
-                    </Button>
-                  </ChakraNextLink>
-                </Flex>
-              </Flex>
+                      <Flex 
+                        alignItems="center" 
+                        mt={2}
+                        mb={4}
+                        transition="all 0.2s"
+                        _hover={{ transform: 'scale(1.012',  }}
+                      >
+                        <Image
+                          src={item.avatarUrl || "/default-creator-image.jpg"}
+                          alt={`${item.name} avatar`}
+                          boxSize="40px"
+                          borderRadius="full"
+                          mr={2}
+                        />
+                        <Text color="white" fontSize="lg" fontWeight="bold">
+                          by {item.name || "Unknown Creator"}
+                        </Text>
+                      </Flex>
+                    </ChakraNextLink>
+                    <Flex 
+                      direction="column"
+                      alignItems="center" 
+                      justifyContent="center" 
+                      transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
+                    >
+                      <Box
+                        maxW="600px"
+                        color="gray.200"
+                        overflow="hidden"
+                        textAlign="center"
+                        height={expandedStates[index] ? "auto" : "3em"}
+                        opacity={1}
+                        transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
+                        mb={2}
+                      >
+                        <Text 
+                          fontSize={{ base: "sm", sm: "sm", md: "md", lg: "md", xl: "md" }} 
+                          transition="all 0.5s cubic-bezier(0.2, 0, 0.38, 0.9)"
+                          style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: expandedStates[index] ? 'unset' : 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {item.description || "No description available."}
+                        </Text>
+                      </Box>
+                      {item.description && item.description.split(" ").length > 20 && (
+                        <Button
+                          size="sm"
+                          color="gray.300"
+                          backgroundColor="transparent"
+                          _hover={{ bg: "rgba(255, 255, 255, 0.1)" }}
+                          onClick={() => handleExpandClick(index)}
+                          mb={2}
+                        >
+                          {expandedStates[index] ? <ChevronUpIcon boxSize={5} /> : <ChevronDownIcon boxSize={5} />}
+                        </Button>
+                      )}
+                      <ChakraNextLink href={`/collection/${item.chain?.id || 0}/${item.address || "#"}`}>
+                        <Button 
+                          size="lg"
+                          position="relative"
+                          color="white"
+                          fontWeight="bold"
+                          px={6}
+                          py={3}
+                          borderRadius="full"
+                          bg="transparent"
+                          border="2px solid white"
+                          _hover={{
+                            borderColor: "transparent",
+                            _before: {
+                              content: '""',
+                              position: "absolute",
+                              top: "-2px",
+                              left: "-2px",
+                              right: "-2px",
+                              bottom: "-2px",
+                              background: "linear-gradient(90deg, #ff00cc, #333399)",
+                              borderRadius: "inherit",
+                              filter: "blur(50px)",
+                              opacity: 0.8,
+                              zIndex: -1,
+                            },
+                            _after: {
+                              content: '""',
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              borderRadius: "inherit",
+                              border: "2.5px solid transparent",
+                              background: "linear-gradient(90deg, #ff00cc, #333399) border-box",
+                              WebkitMask: 
+                                "linear-gradient(#fff 0 0) padding-box, " +
+                                "linear-gradient(#fff 0 0)",
+                              WebkitMaskComposite: "destination-out",
+                              maskComposite: "exclude",
+                            }
+                          }}
+                          transition="all 0.3s ease"
+                        >
+                          <Box
+                            as="span"
+                            position="relative"
+                            zIndex="2"
+                          >
+                            Open Collection
+                          </Box>
+                          <Box
+                            position="absolute"
+                            top="1px"
+                            left="1px"
+                            right="1px"
+                            bottom="1px"
+                            borderRadius="full"
+                            bg="rgba(0, 0, 0, 0.3)"
+                            opacity="0"
+                            transition="opacity 0.3s ease"
+                            _groupHover={{ opacity: 1 }}
+                          />
+                        </Button>
+                      </ChakraNextLink>
+                    </Flex>
+                  </Flex>
+                </motion.div>
+              </AnimatePresence>
             </Box>
           ))}
         </Slider>

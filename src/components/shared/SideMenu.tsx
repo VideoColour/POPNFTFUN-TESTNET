@@ -32,6 +32,61 @@ import { FaDiscord, FaTelegramPlane, FaYoutube, FaInstagram } from "react-icons/
 import { FaXTwitter } from "react-icons/fa6";
 import { ButtonProps } from "@chakra-ui/react/dist/types/button";
 
+type ButtonStyle = {
+  height: string;
+  minWidth: string;
+  bg: string;
+  color: string;
+  border: string;
+  borderRadius: string;
+  backdropFilter: string;
+  boxShadow: string;
+  transition: string;
+  fontSize: string;
+  fontFamily: string;
+  fontWeight: string;
+  px: string;
+  pos: string;
+  _hover: {
+    textDecoration: string;
+    borderColor: string;
+    bg: string;
+    _before: {
+      content: string;
+      pos: string;
+      top: string;
+      left: string;
+      right: string;
+      bottom: string;
+      bg: string;
+      borderRadius: string;
+      filter: string;
+      opacity: number;
+      zIndex: number;
+    };
+    _after: {
+      content: string;
+      pos: string;
+      top: number;
+      left: number;
+      right: number;
+      bottom: number;
+      borderRadius: string;
+      border: string;
+      bg: string;
+      WebkitMask: string;
+      WebkitMaskComposite: string;
+      maskComposite: string;
+    };
+  };
+  _active: {
+    bg: string;
+  };
+  _focus: {
+    boxShadow: string;
+  };
+};
+
 interface SideMenuProps {
   buttonStyle?: ButtonProps;
   iconSize?: number;
@@ -57,20 +112,58 @@ export function SideMenu({ buttonStyle, iconSize = 20 }: SideMenuProps) {
   const connectButtonStyle = {
     height: "36px",
     minWidth: "120px",
-    background: "rgba(255, 255, 255, 0.05)", 
-    color: "white", 
-    border: "1px solid rgba(255, 255, 255, 0.3)", 
-    borderRadius: "12px",
-    backdropFilter: "blur(12px)", 
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0)", 
-    transition: "all 0.2s ease-in-out",
+    background: "transparent",
+    color: "white",
+    border: "1px solid rgba(255, 255, 255, 0.3)",
+    borderRadius: "full",
+    backdropFilter: "none",
+    boxShadow: "none",
+    transition: "all 0.3s ease",
     fontSize: "14px",
     fontFamily: "'BR Hendrix', sans-serif",
     fontWeight: "600",
     padding: "0 12px",
-    ':hover': {
-      background: "rgba(255, 255, 255, 0.15)",
+    pos: "relative",
+    _hover: {
+      textDecoration: "none",
+      borderColor: "transparent",
+      background: "rgba(255, 255, 255, 0.4)", // Slight white background for brightness
+      _before: {
+        content: '""',
+        pos: "absolute",
+        top: "-2px",
+        left: "-2px",
+        right: "-2px",
+        bottom: "-2px",
+        background: "linear-gradient(90deg, #ff00cc, #333399)",
+        borderRadius: "inherit",
+        filter: "blur(50px)",
+        opacity: 0.2, // Increased opacity for more visibility
+        zIndex: -1,
+      },
+      _after: {
+        content: '""',
+        pos: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: "inherit",
+        border: "2px solid transparent",
+        background: "linear-gradient(90deg, #ff00cc, #333399) border-box",
+        WebkitMask: 
+          "linear-gradient(#fff 0 0) padding-box, " +
+          "linear-gradient(#fff 0 0)",
+        WebkitMaskComposite: "destination-out",
+        maskComposite: "exclude",
+      }
     },
+    _active: {
+      background: "rgba(255, 255, 255, 0.15)", // Slightly brighter on active state
+    },
+    _focus: {
+      boxShadow: "none",
+    }
   };
 
   return (
@@ -114,6 +207,14 @@ export function SideMenu({ buttonStyle, iconSize = 20 }: SideMenuProps) {
                 connectButton={{
                   label: "Connect Wallet",
                   style: connectButtonStyle,
+                }}
+                detailsButton={{
+                  style: {
+                    ...connectButtonStyle,
+                    border: "none",
+                    padding: "0",
+                    minWidth: "auto",
+                  },
                 }}
               />
             </Box>

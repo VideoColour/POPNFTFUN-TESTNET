@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { Box, Text, Heading, Flex, Image, IconButton, Icon } from "@chakra-ui/react";
+import { useEffect, useRef } from "react";
+import { Box, Text, Heading, IconButton } from "@chakra-ui/react";
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
@@ -10,19 +10,25 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { Navigation } from 'swiper/modules';
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
-import dynamic from "next/dynamic";
 import { useActiveAccount } from "thirdweb/react";
 import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
-import { FiMoreHorizontal } from "react-icons/fi";
-const BuyNowButton = dynamic(() =>
-  import("@/components/BuyNowButton").then((mod) => mod.default), {
-    ssr: false,
-  }
-);
+import { NFTCard } from './NFTCard';
 
-const PINATA_GATEWAY = "https://amethyst-total-sole-31.mypinata.cloud";
-const PINATA_JWT = process.env.PINATA_JWT;
+// Define the HomeHighlightsProps interface
+interface HomeHighlightsProps {
+  allValidListings: any[];
+}
 
+// Define the NFTItem interface
+interface NFTItem {
+  id: string;
+  metadata: { name: string; image: string };
+  asset?: { id: string; metadata: { name: string; image: string } };
+  currencyValuePerToken?: { displayValue: string; symbol: string };
+  startTimeInSeconds?: number;
+}
+
+// Define the convertIpfsToHttp function
 const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   if (!ipfsUrl) return '/Molder-01.jpg';
   
@@ -42,61 +48,9 @@ const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   return `https://ipfs.io/ipfs/${extractedCid}/${filename}`;
 };
 
-const CustomArrow = ({ type, onClick, isEdge }: any) => {
-  const pointer = type === "PREV" ? <ArrowBackIcon /> : <ArrowForwardIcon />;
-  return (
-    <IconButton
-      aria-label="Arrow Button"
-      onClick={onClick}
-      isDisabled={isEdge}
-      icon={pointer}
-      bg="transparent"
-      color="gray.500" 
-      _hover={{ color: "gray.100", bg: "transparent" }} 
-      size="xl"
-      style={{ zIndex: 2 }} 
-    />
-  );
-};
-interface NFTItem {
-  id: string;
-  metadata: { name: string; image: string };
-  asset?: { id: string; metadata: { name: string; image: string } };
-  currencyValuePerToken?: { displayValue: string; symbol: string };
-  startTimeInSeconds?: number;
-}
-
-interface HomeHighlightsProps {
-  allValidListings: any[];
-}
-
-const NFT_CONTRACT = {
-  address: "0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA",
-  client: undefined,
-  chain: {
-    id: "222000222",
-    rpc: "https://testnet-rpc.meld.com",
-  },
-  title: "Galactic Eyes",
-  thumbnailUrl: "https://videocolour.art/assets/img/portfolio/gifs/GALACTIC-EYE-160-web-v5.gif",
-  type: "ERC721",
-};
-
-// Add this custom icon component
-const MoreVerticalIcon = (props: any) => (
-  <Icon viewBox="0 0 24 24" {...props}>
-    <path
-      fill="currentColor"
-      d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-    />
-  </Icon>
-);
-
 export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
-  const [nftListings, setNftListings] = useState<NFTItem[]>([]);
   const account = useActiveAccount(); 
-  const carouselRef = useRef<any>(null); 
   const swiperRef = useRef<any>();
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
@@ -111,12 +65,8 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     }
   );
 
-  useEffect(() => {
-    fetchNFTs();
-  }, [allNFTs, listingsInSelectedCollection, nftContract]);
-
-  const fetchNFTs = async () => {
-    if (!allNFTs) return;
+  const fetchNFTs = (): NFTItem[] => {
+    if (!allNFTs) return [];
     let mergedNfts: NFTItem[] = [];
 
     if (listingsInSelectedCollection.length === 0) {
@@ -149,8 +99,10 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     }
 
     mergedNfts.sort((a, b) => (b.startTimeInSeconds || 0) - (a.startTimeInSeconds || 0));
-    setNftListings(mergedNfts);
+    return mergedNfts;
   };
+
+  const nftListings = fetchNFTs();
 
   if (nftListings.length === 0) {
     return (
@@ -160,7 +112,6 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
       </Box>
     );
   }
-  const maxItemsToShow = Math.min(nftListings.length, 7);
 
   const slidesPerView = 3; // Number of slides to move at once
 
@@ -187,7 +138,7 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         position="relative"
         overflow="visible"
       >
-        <Box position="relative" mx="60px" py="60px"> {/* Increased vertical padding */}
+        <Box position="relative" mx="60px" py="60px">
           <Swiper
             modules={[Navigation]}
             onBeforeInit={(swiper) => {
@@ -208,123 +159,15 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
             }}
             className="custom-swiper"
           >
-            {nftListings.map((nft, index) => (
+            {nftListings.map((nft: NFTItem, index: number) => (
               <SwiperSlide key={index}>
-                <Box
-                  position="relative"
-                  width="100%"
-                  height="380px" // Increased height to accommodate hover effect
-                  overflow="visible"
-                  padding="6px 6px" // Added padding to create space for hover effect
-                >
-                  <Box
-                    rounded="12px"
-                    bg="rgba(28, 28, 28, 0.6)"
-                    border="1px solid rgb(222, 222, 222, 0.1)"
-                    p="15px"
-                    width="100%"
-                    height="340px"
-                    _hover={{ 
-                      boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)", 
-                      transform: "scale(1.035)",
-                      zIndex: 10,
-                    }}
-                    transition="all 0.2s ease-in-out"
-                    display="flex"
-                    flexDirection="column"
-                  >
-                    <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
-                      <Flex direction="column" height="100%">
-                        <Box
-                          width="105%"
-                          transform="translate(-5px, -4.2px)"
-                          height="200px"
-                          display="flex"
-                          justifyContent="center"
-                          alignItems="center"
-                          overflow="hidden"
-                          borderRadius="8px"
-                        >
-                          <Image 
-                            src={convertIpfsToHttp(nft.metadata.image)}
-                            alt={nft.metadata.name || `NFT #${nft.id}`} 
-                            objectFit="cover"
-                            
-                            width="100%"
-                            height="100%"
-                            fallbackSrc="/Molder-01.jpg"
-                            onError={(e: any) => {
-                              const target = e.target as HTMLImageElement;
-                              console.error('Image load error:', target.src, 'NFT ID:', nft.id);
-                              target.onerror = null;
-                              target.src = '/Molder-01.jpg';
-                            }}
-                          />
-                        </Box>
-                        <Flex justifyContent="space-between" alignItems="center" mt="10px" width="100%" px="0">
-                          <Heading 
-                            as="h3" 
-                            fontSize="xl" 
-                            color="white" 
-                            textAlign="left" 
-                            isTruncated 
-                            maxWidth="80%" 
-                            pl="2" 
-                            transform="translatex(-4px)"
-                          >
-                            {nft.metadata.name}
-                          </Heading>
-                          <IconButton
-                            aria-label="Options"
-                            icon={<Icon as={FiMoreHorizontal} />}
-                            size="sm"
-                            transform="translatex(12px)"
-                            variant="ghost"
-                            color="gray.300"
-                            _hover={{ color: "white" }}
-                            mr="2"
-                          />
-                        </Flex>
-                      </Flex>
-                    </ChakraNextLink>
-                    <Flex justifyContent="space-between" 
-                    alignItems="center" 
-                    w="108%" 
-                    mt="auto" 
-                    transform="translateX(-7.8px)"  
-                    border="1px solid rgb(222, 222, 222, 0.02)" 
-                    borderRadius="12px" 
-                    p="12px" 
-                    mb="-8px"
-                    bg="rgb(40, 40, 40, 0.8)"
-                    >
-                    
-                      <Box>
-                        
-                        <Text color="gray.300" fontSize="sm">Price</Text>
-                        {nft.currencyValuePerToken ? (
-                          <Text fontWeight="bold" fontSize="md" color="white">
-                            {nft.currencyValuePerToken.displayValue} {nft.currencyValuePerToken.symbol === "ETH" ? "MELD" : nft.currencyValuePerToken.symbol}
-                          </Text>
-                        ) : (
-                          <Text fontWeight="bold" fontSize="md" color="gray.500">
-                            Not Listed
-                          </Text>
-                        )}
-                      </Box>
-                      {account && nft.currencyValuePerToken ? (
-                        <BuyNowButton
-                          listing={listingsInSelectedCollection.find((listing: any) => listing.tokenId.toString() === nft.id.toString())!}
-                          account={account}
-                        />
-                      ) : (
-                        <Text fontSize="sm" color="gray.500">
-                          {account ? "Not for sale" : "Connect wallet to buy"}
-                        </Text>
-                      )}
-                    </Flex>
-                  </Box>
-                </Box>
+                <NFTCard
+                  nft={nft}
+                  nftContract={nftContract}
+                  account={account}
+                  listingsInSelectedCollection={listingsInSelectedCollection}
+                  convertIpfsToHttp={convertIpfsToHttp}
+                />
               </SwiperSlide>
             ))}
           </Swiper>
