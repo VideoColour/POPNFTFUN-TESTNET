@@ -138,24 +138,24 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
         position="relative"
         overflow="visible"
       >
-        <Box position="relative" mx="60px" py="60px">
+        <Box position="relative" mx="60px" py="60px" mt="-45px">
           <Swiper
             modules={[Navigation]}
             onBeforeInit={(swiper) => {
               swiperRef.current = swiper;
             }}
-            spaceBetween={0}
+            spaceBetween={-20} // Negative value to bring cards closer
             slidesPerGroup={slidesPerView}
             breakpoints={{
-              1: { slidesPerView: 2, spaceBetween: 5, slidesPerGroup: 2 },
-              750: { slidesPerView: 3, spaceBetween: 5, slidesPerGroup: 3 },
-              980: { slidesPerView: 4, spaceBetween: 10, slidesPerGroup: 3 },
-              1200: { slidesPerView: 5, spaceBetween: 10, slidesPerGroup: 3 },
-              1600: { slidesPerView: 6, spaceBetween: 10, slidesPerGroup: 3 },
-              1800: { slidesPerView: 7, spaceBetween: 10, slidesPerGroup: 3 },
-              2200: { slidesPerView: 8, spaceBetween: 10, slidesPerGroup: 3 },
-              2400: { slidesPerView: 9, spaceBetween: 10, slidesPerGroup: 3 },
-              2700: { slidesPerView: 10, spaceBetween: 10, slidesPerGroup: 3 },
+              1: { slidesPerView: 2, spaceBetween: 0, slidesPerGroup: 2 },
+              750: { slidesPerView: 3, spaceBetween: 0, slidesPerGroup: 3 },
+              980: { slidesPerView: 4, spaceBetween: 0, slidesPerGroup: 3 },
+              1200: { slidesPerView: 5, spaceBetween: 0, slidesPerGroup: 3 },
+              1600: { slidesPerView: 6, spaceBetween: 0, slidesPerGroup: 3 },
+              1800: { slidesPerView: 7, spaceBetween: 0, slidesPerGroup: 3 },
+              2200: { slidesPerView: 8, spaceBetween: 0, slidesPerGroup: 3 },
+              2400: { slidesPerView: 9, spaceBetween: 0, slidesPerGroup: 3 },
+              2700: { slidesPerView: 10, spaceBetween: 0, slidesPerGroup: 3 },
             }}
             className="custom-swiper"
           >
