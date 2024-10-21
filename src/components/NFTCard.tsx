@@ -9,15 +9,19 @@ import { css } from '@emotion/react';
 import { useReadContract } from "thirdweb/react";
 import { ownerOf } from "thirdweb/extensions/erc721";
 
-// Add this type definition
+// Update the NFTItem interface
 interface NFTItem {
-  id: string;
+  id: string | bigint;
   metadata: {
     name: string;
     image: string;
   };
+  owner?: string | null;
+  tokenURI?: string;
+  type?: string;
 }
 
+// Update the NFTCardProps interface
 interface NFTCardProps {
   nft: NFTItem;
   nftContract: any;
@@ -25,6 +29,12 @@ interface NFTCardProps {
   listingsInSelectedCollection: any[];
   convertIpfsToHttp: (url: string | undefined) => string;
   activeWallet: any;
+  chainId?: number;
+  contractAddress?: string;
+  price?: string;
+  currencySymbol?: string;
+  children?: React.ReactNode;
+  id?: string; // Add this line
 }
 
 const ownedButtonStyles = css`
@@ -83,7 +93,20 @@ const listedButtonStyles = css`
   }
 `;
 
-export function NFTCard({ nft, nftContract, account, listingsInSelectedCollection, convertIpfsToHttp, activeWallet }: NFTCardProps) {
+export function NFTCard({ 
+  nft, 
+  nftContract, 
+  account, 
+  listingsInSelectedCollection, 
+  convertIpfsToHttp, 
+  activeWallet,
+  chainId,
+  contractAddress,
+  price,
+  currencySymbol,
+  children,
+  id // Add this line
+}: NFTCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuWidth, setMenuWidth] = useState("220px");
   const [isHovered, setIsHovered] = useState(false);
@@ -136,6 +159,8 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
       }
     } else if (listing) {
       return <BuyNowButton listing={listing} account={account} activeWallet={activeWallet} />;
+    } else if (children) {
+      return children;
     }
     return <Text fontSize="xs" color="gray.500">{account ? "" : "Connect wallet"}</Text>;
   };
@@ -170,7 +195,7 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
           zIndex: isHovered ? 10 : "auto",
         }}
       >
-        <ChakraNextLink href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
+        <ChakraNextLink href={`/collection/${chainId || nftContract.chain.id}/${contractAddress || nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
           <Flex direction="column" height="100%">
             <Box
               ref={imageContainerRef}
@@ -307,7 +332,11 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
         >
           <Box>
             <Text color="gray.300" fontSize="sm">Price</Text>
-            {listing ? (
+            {price ? (
+              <Text fontWeight="bold" fontSize="md" color="white">
+                {price} {currencySymbol || (listing?.currencyValuePerToken.symbol === "ETH" ? "MELD" : listing?.currencyValuePerToken.symbol)}
+              </Text>
+            ) : listing ? (
               <Text fontWeight="bold" fontSize="md" color="white">
                 {listing.currencyValuePerToken.displayValue} {listing.currencyValuePerToken.symbol === "ETH" ? "MELD" : listing.currencyValuePerToken.symbol}
               </Text>

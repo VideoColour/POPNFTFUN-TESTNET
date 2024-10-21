@@ -14,6 +14,8 @@ import {
 import { MediaRenderer, useActiveAccount } from "thirdweb/react"; 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { NFTCard } from "@/components/NFTCard";
+import { convertIpfsToHttp } from "@/utils/ipfsUtils"; // Create this utility function if it doesn't exist
 
 const BuyNowButton = dynamic(() =>
   import("../token-page/BuyNowButton").then((mod) => mod.default), {
@@ -60,66 +62,35 @@ export function ListingGrid() {
       </Flex>
 
       <SimpleGrid columns={columns} spacing={4} p={4} mx="auto" mt="20px">
-        {filteredListings.map((item) => {
-          return (
-            <Box
-              key={item.id}
-              rounded="12px"
-              bg="rgb(33, 33, 33, 0.8)"
-              border="1px solid rgb(222, 222, 222, 0.1)"
-              p="20px"
-              _hover={{ 
-                boxShadow: "0 6px 15px rgba(0, 0, 0, 0.3)", 
-                transform: "scale(1.05)", 
-                transition: "all 0.2s ease-in-out", 
-              }}
-              transition="all 0.2s ease-in-out" 
-            >
-              <ChakraNextLink
-                href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${item.asset.id.toString()}`}
-                _hover={{ 
-                  textDecoration: "none", 
-                }} 
-              >
-                <Flex direction="column" alignItems="center">
-                  <MediaRenderer
-                    client={client}
-                    src={item.asset.metadata.image}
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Text fontWeight="bold" fontSize="lg" mt="10px" color="white" textAlign="center">
-                    {item.asset?.metadata?.name ?? "Unknown item"}
-                  </Text>
-                </Flex>
-              </ChakraNextLink>
-
-              <Flex justifyContent="space-between" alignItems="center" w="100%" mt="2">
-                <Box textAlign="left">
-                  <Text color="gray.300">Price</Text><Text fontWeight="bold" mb="0">
-  {item.currencyValuePerToken.displayValue} {item.currencyValuePerToken.symbol === "ETH" ? "MELD" : item.currencyValuePerToken.symbol}
-</Text>
-
-                  <Text fontWeight="bold" fontSize="lg" color="white">
-                  </Text>
-                </Box>
-
-                {account && (
-                  <Box>
-                    <BuyNowButton
-                      listing={item} 
-                      account={account} 
-                    />
-                  </Box>
-                )}
-              </Flex>
-            </Box>
-          );
-        })}
+        {filteredListings.map((item) => (
+          <NFTCard
+            key={item.id.toString()}
+            nft={{
+              id: item.asset.id.toString(),
+              metadata: {
+                name: item.asset.metadata?.name || "",
+                image: item.asset.metadata?.image || "",
+              },
+              owner: item.asset.owner,
+              tokenURI: item.asset.tokenURI,
+              type: item.asset.type,
+            }}
+            nftContract={nftContract}
+            account={account}
+            listingsInSelectedCollection={listingsInSelectedCollection}
+            convertIpfsToHttp={convertIpfsToHttp}
+            activeWallet={account}
+            price={item.currencyValuePerToken.displayValue}
+            currencySymbol={item.currencyValuePerToken.symbol === "ETH" ? "MELD" : item.currencyValuePerToken.symbol}
+          >
+            {account && (
+              <BuyNowButton
+                listing={item} 
+                account={account} 
+              />
+            )}
+          </NFTCard>
+        ))}
       </SimpleGrid>
     </>
   );

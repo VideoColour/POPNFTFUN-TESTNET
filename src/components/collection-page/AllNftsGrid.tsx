@@ -16,14 +16,17 @@ import { MdKeyboardDoubleArrowLeft, MdKeyboardDoubleArrowRight } from "react-ico
 import { RiArrowLeftSLine, RiArrowRightSLine } from "react-icons/ri";
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
-import { MediaRenderer, useReadContract } from "thirdweb/react";
+import { MediaRenderer, useReadContract, useActiveAccount } from "thirdweb/react";
 import { Button } from "@chakra-ui/react";
+import { NFTCard } from "@/components/NFTCard";
+import { convertIpfsToHttp } from "@/utils/ipfsUtils"; // Create this utility function if it doesn't exist
 
 export function AllNftsGrid() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(20);
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState(""); 
   const { nftContract, type, supplyInfo } = useMarketplaceContext();
+  const account = useActiveAccount();
   
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo
@@ -91,44 +94,24 @@ export function AllNftsGrid() {
       <SimpleGrid columns={columns} spacing={4} p={4} mx="auto" mt="20px">
         {filteredNFTs.length > 0 ? (
           filteredNFTs.map((item) => (
-            <Box
-              key={item.id}
-              rounded="12px"
-              as={ChakraNextLink}
-              href={`/collection/${nftContract.chain.id}/${nftContract.address}/token/${item.id.toString()}`}
-              _hover={{ 
-                textDecoration: "none", 
-                boxShadow: "0 6px 15px rgba(0, 0, 0, 0.3)", 
-                transform: "scale(1.05)", 
-                transition: "all 0.2s ease-in-out" 
+            <NFTCard
+              key={item.id.toString()}
+              nft={{
+                id: item.id.toString(),
+                metadata: {
+                  name: item.metadata?.name || "",
+                  image: item.metadata?.image || "",
+                },
+                owner: item.owner,
+                tokenURI: item.tokenURI,
+                type: item.type,
               }}
-              bg="rgb(33, 33, 33, 0.8)"
-              border="1px solid rgb(222, 222, 222, 0.1)"
-              p="20px"
-            >
-              <Flex direction="column" alignItems="center">
-                <Box borderRadius="12px" overflow="hidden">
-                  <MediaRenderer
-                    client={client}
-                    src={item.metadata.image}
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                      objectFit: "cover",
-                    }}
-                  />
-                </Box>
-                <Text
-                  fontWeight="bold"
-                  fontSize="lg"
-                  mt="10px"
-                  color="white"
-                  textAlign="center"
-                >
-                  {item.metadata?.name ?? "Unknown item"}
-                </Text>
-              </Flex>
-            </Box>
+              nftContract={nftContract}
+              account={account}
+              listingsInSelectedCollection={[]}
+              convertIpfsToHttp={convertIpfsToHttp}
+              activeWallet={account}
+            />
           ))
         ) : (
           <Box mx="auto">Loading...</Box>
