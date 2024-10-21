@@ -2,7 +2,7 @@
 import { jsx } from '@emotion/react';
 import { client } from "@/consts/client";
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
-import { useToast, Button } from "@chakra-ui/react";
+import { useToast, Button, Spinner, Box } from "@chakra-ui/react";
 import {
   type Hex,
   NATIVE_TOKEN_ADDRESS,
@@ -24,11 +24,6 @@ import {
 import type { Account } from "thirdweb/wallets";
 import { css, keyframes } from "@emotion/react";
 import React from "react";
-
-type Props = {
-  listing: DirectListing | undefined;
-  account: Account | undefined;
-};
 
 const shimmer = keyframes`
   0% {
@@ -97,59 +92,134 @@ const buttonStyles = css`
   &:hover span {
     color: rgba(255, 255, 255, 1);
   }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 `;
 
-const addChain = async () => {
-  try {
-    await (window as any).ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [
-        {
-          chainId: "0x3637275b", 
-          chainName: "Meld Testnet",
-          rpcUrls: ["https://testnet-rpc.meld.com"],
-          nativeCurrency: {
-            name: "gMeld",
-            symbol: "gMELD",
-            decimals: 18,
-          },
-          blockExplorerUrls: ["https://testnet.meldscan.io"],
-        },
-      ],
-    });
-  } catch (error) {
-    console.error("Failed to add chain:", error);
-  }
-};
+const loadingButtonStyles = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+`;
 
-export default function BuyNowButton({ listing, account }: Props) {
+const spinnerStyles = css`
+  color: white;
+`;
+
+const buttonContentStyles = css`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const customSpinnerStyles = css`
+  width: 20px;
+  height: 20px;
+  border: 2px solid white;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: ${spin} 1s linear infinite;
+`;
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+`;
+
+const pulsatingDotStyles = css`
+  width: 10px;
+  height: 10px;
+  background-color: white;
+  border-radius: 50%;
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const rotate = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const fadingRingStyles = css`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: ${rotate} 1s linear infinite;
+`;
+
+const burstPulse = keyframes`
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+`;
+
+const burstingRingStyles = css`
+  width: 20px;
+  height: 20px;
+  border: 2px solid white;
+  border-radius: 50%;
+  animation: ${burstPulse} 1.5s ease-out infinite;
+`;
+
+interface BuyNowButtonProps {
+  listing: any;
+  account: any;
+  onBuyStart?: () => void;
+  onBuyEnd?: () => void;
+  activeWallet: any;
+}
+
+export default function BuyNowButton({ listing, account, onBuyStart, onBuyEnd, activeWallet }: BuyNowButtonProps) {
   const { marketplaceContract, nftContract, refetchAllListings } = useMarketplaceContext();
   const toast = useToast();
   const activeChain = useActiveWalletChain();
   const switchChain = useSwitchActiveWalletChain();
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleClick = async () => {
-    if (!account || typeof account.sendTransaction !== 'function') {
-      console.error("No wallet connected or sendTransaction not implemented");
-      // Optionally, you can trigger the wallet connection here
-      return;
-    }
-
-    if (!listing) {
-      console.error("Listing is undefined");
-      return;
-    }
-
-    if (activeChain?.id !== nftContract.chain.id) {
-      try {
-        await switchChain(nftContract.chain);
-      } catch (error) {
-        console.error("Switch chain error:", error);
-        await addChain(); 
-      }
-    }
-
+  const handleBuy = async () => {
+    setIsLoading(true);
+    if (onBuyStart) onBuyStart();
     try {
+      if (!account || typeof account.sendTransaction !== 'function') {
+        console.error("No wallet connected or sendTransaction not implemented");
+        // Optionally, you can trigger the wallet connection here
+        return;
+      }
+
+      if (!listing) {
+        console.error("Listing is undefined");
+        return;
+      }
+
+      if (activeChain?.id !== nftContract.chain.id) {
+        try {
+          await switchChain(nftContract.chain);
+        } catch (error) {
+          console.error("Switch chain error:", error);
+          await addChain(); 
+        }
+      }
+
       if (
         listing.currencyContractAddress.toLowerCase() !==
         NATIVE_TOKEN_ADDRESS.toLowerCase()
@@ -196,36 +266,35 @@ export default function BuyNowButton({ listing, account }: Props) {
 
       refetchAllListings();
     } catch (error) {
-      console.error("Error during purchase:", error);
-      if ((error as Error).message.startsWith("insufficient funds for gas")) {
-        toast({
-          title: "You don't have enough funds for this purchase.",
-          description: `Make sure you have enough gas for the transaction + ${listing.currencyValuePerToken.displayValue} ${
-            listing.currencyValuePerToken.symbol === "ETH" ? "MELD" : listing.currencyValuePerToken.symbol
-          }`,
-          status: "error",
-          isClosable: true,
-          duration: 7000,
-        });
-      } else {
-        toast({
-          title: "Error during purchase",
-          description: (error as Error).message,
-          status: "error",
-          isClosable: true,
-          duration: 7000,
-        });
-      }
+      console.error("Error buying NFT:", error);
+      toast({
+        title: "Error occurred while purchasing.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+      if (onBuyEnd) onBuyEnd();
     }
   };
 
-  if (!listing || !account) {
-    return null; // Don't render the button if there's no listing or account
-  }
-
   return (
-    <div css={buttonStyles} onClick={handleClick}>
-      <span>Buy</span>
-    </div>
+    <Button
+      onClick={handleBuy}
+      css={[buttonStyles, isLoading && loadingButtonStyles]}
+      disabled={isLoading}
+      aria-label={isLoading ? "Buying in progress" : "Buy now"}
+    >
+      {isLoading ? (
+        <div css={burstingRingStyles} />
+      ) : (
+        <span>Buy</span>
+      )}
+    </Button>
   );
+}
+
+function addChain() {
+  throw new Error('Function not implemented.');
 }

@@ -53,6 +53,7 @@ import { DirectListing } from "thirdweb/extensions/marketplace";
 import { useActiveWallet, useConnectModal } from "thirdweb/react";
 import { client } from "@/consts/client";
 import { Wallet } from "thirdweb/wallets";
+import HomeHighlights from "@/components/HomeHighlights";
 const CancelListingButton = dynamic(() => import("./CancelListingButton"), {
   ssr: false,
 });
@@ -72,13 +73,12 @@ export function Token(props: Props) {
 
   useEffect(() => {
     if (!activeWallet) {
-      console.log("No active wallet");
-      // Remove the automatic connection attempt
-      // connect({ client });
+      console.log("No active wallet, attempting to connect...");
+      connect({ client });
     } else {
       console.log("Wallet is connected:", activeWallet);
     }
-  }, [activeWallet]);
+  }, [activeWallet, connect]);
 
   return (
     <ThirdwebProvider>
@@ -170,9 +170,21 @@ async function purchaseFromListing(params: ListingParams, listingId: string, qua
   }
 }
 
+// Update the Props interface for RelatedListings
+interface RelatedListingsProps {
+  excludedListingId: bigint;
+  activeWallet: any; // You might want to use a more specific type here
+}
+
+// Update the Props interface for HomeHighlights
+interface HomeHighlightsProps {
+  allValidListings: any[]; // Adjust this type as needed
+}
+
 function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) {
   const [listingsData, setListingsData] = useState<DirectListing[]>([]);
   const [offersData, setOffersData] = useState<Offer[]>([]);
+  const [allValidListings, setAllValidListings] = useState<any[]>([]); // Add this line
 
   const {
     type,
@@ -219,8 +231,7 @@ function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) 
   console.log("Listings:", listings);
   console.log("First Listing ID:", listings[0]?.id);
 
-  const ownedByYou =
-    nft?.owner?.toLowerCase() === account?.address.toLowerCase();
+  const ownedByYou = nft?.owner?.toLowerCase() === address.toLowerCase();
 
   const userHasActiveListing = listings.some(
     (listing) =>
@@ -271,6 +282,12 @@ function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) 
         listingId: fetchedListings[0]?.id.toString() ?? "" 
       });
       setOffersData(fetchedOffers as Offer[]);
+      // Set all valid listings
+      setAllValidListings(fetchedListings.filter((listing: any) => {
+        // Add your validation logic here
+        // For example, check if the listing is active and not expired
+        return listing.status === 'active' && new Date(listing.endTime) > new Date();
+      }));
     }
 
     fetchData();
@@ -528,7 +545,7 @@ function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) 
                       Owner
                     </Text>
                     {ownedByYou && (
-                      <Text fontSize="sm" color="gray" ml="2">
+                      <Text fontSize="sm" color="gray.400" ml="2">
                         (You)
                       </Text>
                     )}
@@ -545,7 +562,7 @@ function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) 
                     overflow="hidden"
                     _hover={{ color: "red.500", textDecoration: "none" }}
                   >
-                    {nft?.owner ? shortenAddress(nft.owner) : "Unknown"}
+                    {nft?.owner ? (ownedByYou ? "You" : shortenAddress(nft.owner)) : "Unknown"}
                   </ChakraNextLink>
                 </Box>
               </Flex>
@@ -806,12 +823,16 @@ function TokenContent({ tokenId, activeWallet }: Props & { activeWallet: any }) 
         )}
       </Box>
       <Box width="100%" mt="270px" flexGrow={1} mb="15px">
-      <MarketplaceProvider chainId="222000222" contractAddress="0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA" wallet={activeWallet}>
-  <RelatedListings 
-    excludedListingId={listings[0]?.id ? BigInt(listings[0].id) : BigInt(-1)} 
-    activeWallet={activeWallet}
-  />
-</MarketplaceProvider>
+        <MarketplaceProvider 
+          chainId="222000222" 
+          contractAddress={nftContract.address} 
+          wallet={activeWallet}
+        >
+          <HomeHighlights 
+            allValidListings={allValidListings || []}
+            activeWallet={activeWallet}
+          />
+        </MarketplaceProvider>
       </Box>
 
     </Flex>
@@ -868,3 +889,8 @@ function useMarketplaceOffers(MARKETPLACE_CONTRACTS: { [x: string]: any; address
     error: null
   };
 }
+
+
+
+
+

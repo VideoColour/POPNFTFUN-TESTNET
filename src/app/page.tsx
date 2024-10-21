@@ -98,7 +98,7 @@ export default function Home() {
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 1200,
+    autoplaySpeed: 1000,
     arrows: false,
     centerMode: true,
     centerPadding: '30%', 

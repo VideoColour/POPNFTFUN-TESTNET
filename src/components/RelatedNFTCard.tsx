@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Text, Heading, Flex, Image, IconButton, Icon, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Button } from "@chakra-ui/react";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { FiMoreHorizontal, FiRefreshCw, FiShare2, FiExternalLink, FiDollarSign } from "react-icons/fi";
@@ -8,6 +8,7 @@ import { useOutsideClick, Portal } from "@chakra-ui/react";
 import { css } from '@emotion/react';
 import { useReadContract } from "thirdweb/react";
 import { ownerOf } from "thirdweb/extensions/erc721";
+import RelatedBuyNowButton from './token-page/RelatedBuyNowButton';
 
 interface NFTCardProps {
   nft: any;
@@ -73,6 +74,11 @@ const listedButtonStyles = css`
   }
 `;
 
+interface RelatedBuyNowButtonProps {
+  listing: any;
+  account: any;
+}
+
 export function NFTCard({ nft, nftContract, account, listingsInSelectedCollection, convertIpfsToHttp }: NFTCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuWidth, setMenuWidth] = useState("220px");
@@ -87,6 +93,34 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
     handler: () => setIsMenuOpen(false),
   });
 
+  useEffect(() => {
+    const updateMenuWidth = () => {
+      if (imageContainerRef.current) {
+        const rect = imageContainerRef.current.getBoundingClientRect();
+        setMenuWidth(`${rect.width * 1.03}px`);
+      }
+    };
+
+    updateMenuWidth();
+    window.addEventListener('resize', updateMenuWidth);
+
+    return () => {
+      window.removeEventListener('resize', updateMenuWidth);
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setIsMenuOpen(false);
+  };
+
+  const listing = listingsInSelectedCollection.find((l: any) => l.tokenId.toString() === nft.id.toString());
+  const isListed = !!listing;
+
   const { data: owner } = useReadContract(ownerOf, {
     contract: nftContract,
     tokenId: nft.id,
@@ -99,13 +133,6 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
       setIsOwned(false);
     }
   }, [owner, account]);
-
-  const listing = useMemo(() => 
-    listingsInSelectedCollection.find((l: any) => l.tokenId.toString() === nft.id.toString()),
-    [listingsInSelectedCollection, nft.id]
-  );
-
-  const isListed = !!listing;
 
   const renderButton = () => {
     if (isOwned) {
@@ -125,13 +152,10 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
         );
       }
     } else if (listing) {
-      return <BuyNowButton listing={listing} account={account} activeWallet={undefined} />;
+      return <RelatedBuyNowButton listing={listing} account={account} />;
     }
     return <Text fontSize="xs" color="gray.500">{account ? "" : "Connect wallet"}</Text>;
   };
-
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => setIsHovered(false);
 
   return (
     <Box

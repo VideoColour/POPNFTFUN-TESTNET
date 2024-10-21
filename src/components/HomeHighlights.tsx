@@ -17,6 +17,7 @@ import { NFTCard } from './NFTCard';
 // Define the HomeHighlightsProps interface
 interface HomeHighlightsProps {
   allValidListings: any[];
+  activeWallet?: any; // Add this line
 }
 
 // Define the NFTItem interface
@@ -48,7 +49,7 @@ const convertIpfsToHttp = (ipfsUrl: string | undefined) => {
   return `https://ipfs.io/ipfs/${extractedCid}/${filename}`;
 };
 
-export default function HomeHighlights({ allValidListings }: HomeHighlightsProps) {
+const HomeHighlights = ({ allValidListings = [], activeWallet }: HomeHighlightsProps) => {
   const { nftContract, type, supplyInfo, listingsInSelectedCollection } = useMarketplaceContext();
   const account = useActiveAccount(); 
   const swiperRef = useRef<any>();
@@ -61,9 +62,10 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
     {
       contract: nftContract,
       start: Number(startTokenId),
-      count: 40,
+      count: Number(totalItems),
     }
   );
+  console.log("useReadContract returned allNFTs:", allNFTs);
 
   const fetchNFTs = (): NFTItem[] => {
     if (!allNFTs) return [];
@@ -201,4 +203,6 @@ export default function HomeHighlights({ allValidListings }: HomeHighlightsProps
       </Box>
     </Box>
   );
-}
+};
+
+export default HomeHighlights;
