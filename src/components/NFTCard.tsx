@@ -9,12 +9,22 @@ import { css } from '@emotion/react';
 import { useReadContract } from "thirdweb/react";
 import { ownerOf } from "thirdweb/extensions/erc721";
 
+// Add this type definition
+interface NFTItem {
+  id: string;
+  metadata: {
+    name: string;
+    image: string;
+  };
+}
+
 interface NFTCardProps {
-  nft: any;
+  nft: NFTItem;
   nftContract: any;
   account: any;
   listingsInSelectedCollection: any[];
   convertIpfsToHttp: (url: string | undefined) => string;
+  activeWallet: any;
 }
 
 const ownedButtonStyles = css`
@@ -73,7 +83,7 @@ const listedButtonStyles = css`
   }
 `;
 
-export function NFTCard({ nft, nftContract, account, listingsInSelectedCollection, convertIpfsToHttp }: NFTCardProps) {
+export function NFTCard({ nft, nftContract, account, listingsInSelectedCollection, convertIpfsToHttp, activeWallet }: NFTCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuWidth, setMenuWidth] = useState("220px");
   const [isHovered, setIsHovered] = useState(false);
@@ -89,7 +99,7 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
 
   const { data: owner } = useReadContract(ownerOf, {
     contract: nftContract,
-    tokenId: nft.id,
+    tokenId: BigInt(nft.id), // Convert nft.id to BigInt
   });
 
   useEffect(() => {
@@ -125,7 +135,7 @@ export function NFTCard({ nft, nftContract, account, listingsInSelectedCollectio
         );
       }
     } else if (listing) {
-      return <BuyNowButton listing={listing} account={account} activeWallet={undefined} />;
+      return <BuyNowButton listing={listing} account={account} activeWallet={activeWallet} />;
     }
     return <Text fontSize="xs" color="gray.500">{account ? "" : "Connect wallet"}</Text>;
   };
