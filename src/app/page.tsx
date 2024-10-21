@@ -618,25 +618,25 @@ export default function Home() {
 
       <Box width="90%" mt="12px" flexGrow={1} mb="-60px">
         <MarketplaceProvider chainId="222000222" contractAddress="0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA">
-          <HomeHighlights allValidListings={allValidListings || []} />
+          <HomeHighlights allValidListings={allValidListings || []} activeWallet={undefined} />
         </MarketplaceProvider>
       </Box>
 
       <Box width="90%" mt="20px" flexGrow={1} mb="-60px">
         <MarketplaceProvider chainId="222000222" contractAddress="0x2220001D2CFb9B6066A91dE5D4e861A21f549BA0">
-          <HomeHighlights allValidListings={allValidListings || []} />
+          <HomeHighlights allValidListings={allValidListings || []} activeWallet={undefined} />
         </MarketplaceProvider>
       </Box>
 
       <Box width="90%" mt="20px" flexGrow={1} mb="-60px">
         <MarketplaceProvider chainId="222000222" contractAddress="0xEdc67F3f52D9afd84D0487BD3b830a83c98FEe2B">
-          <HomeHighlights allValidListings={allValidListings || []} />
+          <HomeHighlights allValidListings={allValidListings || []} activeWallet={undefined} />
         </MarketplaceProvider>
       </Box>
 
       <Box width="90%" mt="20px" flexGrow={1} mb="20px">
         <MarketplaceProvider chainId="222000222" contractAddress="0x0307Cd59fe2Ac48C8573Fda134ed75E78bb94ECA">
-          <HomeHighlights allValidListings={allValidListings || []} />
+          <HomeHighlights allValidListings={allValidListings || []} activeWallet={undefined} />
         </MarketplaceProvider>
       </Box>
 

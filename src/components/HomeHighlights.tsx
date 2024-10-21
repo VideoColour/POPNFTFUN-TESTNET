@@ -17,7 +17,7 @@ import { NFTCard } from './NFTCard';
 // Define the HomeHighlightsProps interface
 interface HomeHighlightsProps {
   allValidListings: any[];
-  activeWallet?: any; // Add this line
+  activeWallet: any; // Change this from optional to required
 }
 
 // Define the NFTItem interface
@@ -169,6 +169,7 @@ const HomeHighlights = ({ allValidListings = [], activeWallet }: HomeHighlightsP
                   account={account}
                   listingsInSelectedCollection={listingsInSelectedCollection}
                   convertIpfsToHttp={convertIpfsToHttp}
+                  activeWallet={activeWallet}
                 />
               </SwiperSlide>
             ))}
