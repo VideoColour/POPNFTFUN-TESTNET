@@ -150,14 +150,14 @@ const HomeHighlights = ({ allValidListings = [], activeWallet }: HomeHighlightsP
             slidesPerGroup={slidesPerView}
             breakpoints={{
               1: { slidesPerView: 2, spaceBetween: 0, slidesPerGroup: 2 },
-              750: { slidesPerView: 3, spaceBetween: 0, slidesPerGroup: 3 },
-              980: { slidesPerView: 4, spaceBetween: 0, slidesPerGroup: 3 },
-              1200: { slidesPerView: 5, spaceBetween: 0, slidesPerGroup: 3 },
-              1600: { slidesPerView: 6, spaceBetween: 0, slidesPerGroup: 3 },
-              1800: { slidesPerView: 7, spaceBetween: 0, slidesPerGroup: 3 },
-              2200: { slidesPerView: 8, spaceBetween: 0, slidesPerGroup: 3 },
-              2400: { slidesPerView: 9, spaceBetween: 0, slidesPerGroup: 3 },
-              2700: { slidesPerView: 10, spaceBetween: 0, slidesPerGroup: 3 },
+              750: { slidesPerView: 2, spaceBetween: 0, slidesPerGroup: 3 },
+              1100: { slidesPerView: 3, spaceBetween: 0, slidesPerGroup: 3 },
+              1400: { slidesPerView: 4, spaceBetween: 0, slidesPerGroup: 3 },
+              1800: { slidesPerView: 4, spaceBetween: 0, slidesPerGroup: 3 },
+              2000: { slidesPerView: 5, spaceBetween: 0, slidesPerGroup: 3 },
+              2200: { slidesPerView: 6, spaceBetween: 0, slidesPerGroup: 3 },
+              2700: { slidesPerView: 7, spaceBetween: 0, slidesPerGroup: 3 },
+              3000: { slidesPerView: 8, spaceBetween: 0, slidesPerGroup: 3 },
             }}
             className="custom-swiper"
           >

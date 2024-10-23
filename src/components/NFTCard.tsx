@@ -166,16 +166,19 @@ export function NFTCard({
   };
 
   const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => setIsHovered(false);
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setIsMenuOpen(false);  // Close the menu when leaving the card
+  };
 
   return (
     <Box
       ref={cardRef}
       position="relative"
       width="100%"
-      height="380px"
-      overflow="visible"
-      padding="6px 6px"
+      height="473px"
+      overflow="hidden"
+      padding="6px"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -185,33 +188,30 @@ export function NFTCard({
         border="1px solid rgb(222, 222, 222, 0.1)"
         p="15px"
         width="100%"
-        height="340px"
-        transition="all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
+        height="100%"
+        transition="all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
         display="flex"
         flexDirection="column"
         sx={{
-          boxShadow: isHovered ? "0 6px 15px rgba(0, 0, 0, 0.15)" : "none",
-          transform: isHovered ? "scale(1.03) translateY(-1px)" : "none",
-          zIndex: isHovered ? 10 : "auto",
+          transform: isHovered ? "scale(1.025) translateY(-1px)" : "none",
+          zIndex: isHovered ? 100000 : "auto",
         }}
       >
         <ChakraNextLink href={`/collection/${chainId || nftContract.chain.id}/${contractAddress || nftContract.address}/token/${nft.id}`} _hover={{ textDecoration: "none" }} flex="1">
           <Flex direction="column" height="100%">
             <Box
               ref={imageContainerRef}
-              width="105%"
-              transform="translate(-5px, -4.2px)"
-              height="200px"
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
+              width="100%"
+              height="320px"
               overflow="hidden"
               borderRadius="8px"
+              position="relative"
             >
               <Image 
                 src={convertIpfsToHttp(nft.metadata.image)}
                 alt={nft.metadata.name || `NFT #${nft.id}`} 
                 objectFit="cover"
+                objectPosition="center"
                 width="100%"
                 height="100%"
                 fallbackSrc="/Molder-01.jpg"
@@ -279,9 +279,9 @@ export function NFTCard({
                 width={menuWidth}
                 maxWidth={menuWidth}
                 position="absolute"
-                right="-14px"
+                right="0px"
                 bottom="100%"
-                marginBottom="5px"
+                marginBottom="-5px"
                 overflow="hidden"
                 sx={{
                   '&::before': {
@@ -299,7 +299,8 @@ export function NFTCard({
                 }}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-                  if (!cardRef.current?.contains(e.relatedTarget as Node)) {
+                  const relatedTarget = e.relatedTarget as Node;
+                  if (!cardRef.current?.contains(relatedTarget) && !menuRef.current?.contains(relatedTarget)) {
                     setIsHovered(false);
                     setIsMenuOpen(false);
                   }
@@ -320,7 +321,8 @@ export function NFTCard({
         <Flex 
           justifyContent="space-between" 
           alignItems="center" 
-          w="107%" 
+          w="102%" 
+          height="100%"
           mt="auto" 
           borderRadius="8px" 
           p="12px" 
@@ -328,7 +330,7 @@ export function NFTCard({
           position="relative"
           left="50%"
           transform="translateX(-50%)"
-          mb="-6px"
+          mb="-4px"
         >
           <Box>
             <Text color="gray.300" fontSize="sm">Price</Text>

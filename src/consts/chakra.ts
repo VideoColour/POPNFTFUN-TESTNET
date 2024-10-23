@@ -10,9 +10,10 @@ export const chakraTheme = extendTheme({
     heading: `'Bebas Neue', sans-serif`, 
   },
   breakpoints: {
-    xxl: '2060px', 
-    xl: '1566px',
-    lg: '1175px',
+    xxxxl: '3000px',
+    xxxl: '2600px',
+    xxl: '2260px', 
+    xl: '1700px',
   },
   
   styles: {
@@ -25,4 +26,5 @@ export const chakraTheme = extendTheme({
     },
     
   },
+  
 });

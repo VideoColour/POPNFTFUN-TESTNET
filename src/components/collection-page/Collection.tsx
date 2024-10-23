@@ -104,11 +104,14 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
   const len = combinedNFTs.length;
   const columns = useBreakpointValue({
     base: 2,
+
     sm: Math.min(len, 2),
-    md: Math.min(len, 4),
-    lg: Math.min(len, 5),
-    xl: Math.min(len, 6),
-    xxl: Math.min(len, 8),
+    md: Math.min(len, 3),
+    lg: Math.min(len, 4),
+    xl: Math.min(len, 5),
+    xxl: Math.min(len, 7),
+    xxxl: Math.min(len, 8),
+    xxxxl: Math.min(len, 9),
 
   });
 
@@ -540,16 +543,22 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
           </Box>
 
           {/* Updated search bar */}
-          <Flex justifyContent="center" alignItems="center" mt="10px" px="10px" width="100%">
-            <Input
-              placeholder="Search NFTs"
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              width="100%"
-              maxW={`calc(${columns} * 275px + ${columns - 1} * 10px)`} // Adjust based on your NFT card width and gap
-              bg="rgba(30,30,30,0.7)"
-              border="1px solid rgb(222, 222, 222, 0.1)"
-            />
+          <Flex justifyContent="center" alignItems="center" mt="10px" width="100%">
+            <Box width="100%" maxWidth="3400px" px="15px">
+              <Input
+                placeholder="Search NFTs"
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                width="100%"
+                bg="rgba(30,30,30,0.7)"
+                border="1px solid rgb(222, 222, 222, 0.1)"
+                _focus={{
+                  outline: "none",
+                  boxShadow: "none",
+                  border: "1px solid rgb(222, 222, 222, 0.3)",
+                }}
+              />
+            </Box>
           </Flex>
 
           <SimpleGrid 
@@ -560,7 +569,7 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
             mt="-10px"
             sx={{
               '& > *': {
-                marginBottom: '-28px',
+                marginBottom: '1px',
               }
             }}
           >
