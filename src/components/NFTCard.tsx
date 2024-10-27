@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Box, Text, Heading, Flex, Image, IconButton, Icon, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Button } from "@chakra-ui/react";
+import { Box, Text, Heading, Flex, IconButton, Icon, Menu, MenuButton, MenuList, MenuItem, MenuDivider, Button } from "@chakra-ui/react";
 import { ChakraNextLink } from '@/components/ChakraNextLink';
 import { FiMoreHorizontal, FiRefreshCw, FiShare2, FiExternalLink, FiDollarSign } from "react-icons/fi";
 import { FaHandHolding } from "react-icons/fa";
@@ -8,6 +8,7 @@ import { useOutsideClick, Portal } from "@chakra-ui/react";
 import { css } from '@emotion/react';
 import { useReadContract } from "thirdweb/react";
 import { ownerOf } from "thirdweb/extensions/erc721";
+import { NFTCardSkeleton } from './NFTCardSkeleton';
 
 // Update the NFTItem interface
 interface NFTItem {
@@ -114,6 +115,7 @@ export function NFTCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const [isOwned, setIsOwned] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useOutsideClick({
     ref: menuRef,
@@ -171,6 +173,17 @@ export function NFTCard({
     setIsMenuOpen(false);  // Close the menu when leaving the card
   };
 
+  useEffect(() => {
+    const img = new Image();
+    img.src = convertIpfsToHttp(nft.metadata.image);
+    img.onload = () => setIsLoading(false);
+    img.onerror = () => setIsLoading(false);
+  }, [nft.metadata.image, convertIpfsToHttp]);
+
+  if (isLoading) {
+    return <NFTCardSkeleton />;
+  }
+
   return (
     <Box
       ref={cardRef}
@@ -207,14 +220,15 @@ export function NFTCard({
               borderRadius="8px"
               position="relative"
             >
-              <Image 
+              <img 
                 src={convertIpfsToHttp(nft.metadata.image)}
                 alt={nft.metadata.name || `NFT #${nft.id}`} 
-                objectFit="cover"
-                objectPosition="center"
-                width="100%"
-                height="100%"
-                fallbackSrc="/Molder-01.jpg"
+                style={{
+                  objectFit: "cover",
+                  objectPosition: "center",
+                  width: "100%",
+                  height: "100%",
+                }}
                 onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                   const target = e.currentTarget;
                   console.error('Image load error:', target.src, 'NFT ID:', nft.id);

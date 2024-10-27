@@ -4,8 +4,8 @@ import { MediaRenderer, useReadContract, useActiveAccount } from "thirdweb/react
 import { getNFTs as getNFTs1155 } from "thirdweb/extensions/erc1155";
 import { getNFTs as getNFTs721 } from "thirdweb/extensions/erc721";
 import { client } from "@/consts/client";
-import { Box, Flex, Heading, Text, Input, SimpleGrid, useBreakpointValue, Button, Avatar, Link } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { Box, Flex, Heading, Text, Input, SimpleGrid, useBreakpointValue, Button, Avatar, Link, Spinner } from "@chakra-ui/react";
+import { useState, useEffect, useMemo } from "react";
 import { useMarketplaceContext } from "@/hooks/useMarketplaceContext";
 import { NFTCard } from "@/components/NFTCard";
 import { convertIpfsToHttp } from "@/utils/ipfsUtils";
@@ -19,6 +19,10 @@ import { getAllOwners } from "thirdweb/extensions/erc721";
 import { ethers } from "ethers";
 import { formatEther, formatUnits } from "ethers";
 import { getAllListings } from "thirdweb/extensions/marketplace"; // Import the appropriate function
+import { useInView } from 'react-intersection-observer';
+import { keyframes } from "@emotion/react";
+import { NFTCardSkeleton } from '../NFTCardSkeleton';
+import { adaptNFTToNFTItem, NFTItem } from '@/utils/nftAdapter';
 
 const BuyNowButton = dynamic(() =>
   import("../token-page/BuyNowButton").then((mod) => mod.default), {
@@ -33,12 +37,17 @@ export interface CollectionProps {
   contractAddress: string;
 }
 
+// Define the keyframes for the fade effect
+const fadeInOut = keyframes`
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+`;
+
 export function Collection({ chainId, contractAddress }: CollectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const {
     type,
     nftContract,
-    isLoading,
     listingsInSelectedCollection,
     supplyInfo,
     allValidListings,
@@ -46,8 +55,27 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
   } = useMarketplaceContext();
   const account = useActiveAccount();
 
-  const [itemsPerPage] = useState<number>(20); // Explicitly set to 20 NFTs per page
-  const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
+  const [loadedNFTs, setLoadedNFTs] = useState<NFT[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [ref, inView] = useInView();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isPreloading, setIsPreloading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const columns = useBreakpointValue({
+    base: 2,
+    sm: 2,
+    md: 3,
+    lg: 4,
+    xl: 5,
+    xxl: 7,
+    xxxl: 8,
+    xxxxl: 9,
+  }) || 2;
+
+  // Move itemsPerPage declaration here
+  const itemsPerPage = useMemo(() => columns * 4, [columns]);
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo
@@ -76,8 +104,8 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
     type === "ERC1155" ? getNFTs1155 : getNFTs721,
     {
       contract: nftContract,
-      start: pages[currentPageIndex]?.start ?? 0,
-      count: pages[currentPageIndex]?.count ?? 0,
+      start: pages[0]?.start ?? 0,
+      count: pages[0]?.count ?? 0,
     }
   );
 
@@ -102,18 +130,6 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
   console.log("Combined NFTs:", combinedNFTs);
 
   const len = combinedNFTs.length;
-  const columns = useBreakpointValue({
-    base: 2,
-
-    sm: Math.min(len, 2),
-    md: Math.min(len, 3),
-    lg: Math.min(len, 4),
-    xl: Math.min(len, 5),
-    xxl: Math.min(len, 7),
-    xxxl: Math.min(len, 8),
-    xxxxl: Math.min(len, 9),
-
-  });
 
   const [imageLoading, setImageLoading] = useState(true);
   const [contractMetadata, setContractMetadata] = useState<any>(null);
@@ -378,6 +394,125 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
     console.log("listingsInSelectedCollection:", listingsInSelectedCollection);
   }, [listingsInSelectedCollection]);
 
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      if (nftContract && supplyInfo) {
+        const totalNFTs = Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId) + 1;
+        const count = Math.min(itemsPerPage, totalNFTs);
+
+        const newNFTs = await (type === "ERC1155" ? getNFTs1155 : getNFTs721)({
+          contract: nftContract,
+          start: 0,
+          count,
+        });
+
+        setLoadedNFTs(newNFTs);
+        setIsInitialLoad(false);
+
+        if (newNFTs.length < totalNFTs) {
+          setHasMore(true);
+        } else {
+          setHasMore(false);
+        }
+      }
+    };
+
+    if (isInitialLoad) {
+      fetchNFTs();
+    }
+  }, [nftContract, type, itemsPerPage, supplyInfo, isInitialLoad]);
+
+  useEffect(() => {
+    const loadMoreNFTs = async () => {
+      if (!hasMore || !nftContract || !supplyInfo || isLoadingMore) return;
+
+      setIsLoadingMore(true);
+
+      const totalNFTs = Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId) + 1;
+      const start = loadedNFTs.length;
+      const remainingNFTs = totalNFTs - start;
+      const count = Math.min(Math.floor(itemsPerPage * 0.75), remainingNFTs);
+
+      if (count <= 0) {
+        setHasMore(false);
+        return;
+      }
+
+      const newNFTs = await (type === "ERC1155" ? getNFTs1155 : getNFTs721)({
+        contract: nftContract,
+        start,
+        count,
+      });
+
+      if (newNFTs.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      setLoadedNFTs(prev => [...prev, ...newNFTs]);
+      setIsLoadingMore(false);
+
+      if (loadedNFTs.length + newNFTs.length >= totalNFTs) {
+        setHasMore(false);
+      }
+    };
+
+    if (!isInitialLoad && inView && hasMore) {
+      loadMoreNFTs();
+    }
+  }, [inView, hasMore, loadedNFTs.length, itemsPerPage, type, nftContract, isInitialLoad, supplyInfo, isLoadingMore]);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      if (nftContract) {
+        console.log("Fetching NFTs and listings...");
+        const fetchedNFTs = await (type === "ERC1155" ? getNFTs1155 : getNFTs721)({
+          contract: nftContract,
+          start: 0,
+          count: 100,
+        });
+        
+        // Fetch active listings
+        const activeListings = await getAllListings({ contract: marketplaceContract });
+        
+        // Combine NFT data with listing data
+        const nftsWithListings = fetchedNFTs.map(nft => {
+          const listing = activeListings.find(listing => listing.tokenId === nft.id);
+          return {
+            ...nft,
+            listing: listing || null
+          };
+        });
+        
+        console.log("NFTs with listings:", nftsWithListings);
+        setNfts(nftsWithListings);
+      }
+      setIsLoading(false);
+    };
+
+    fetchNFTs();
+  }, [nftContract, type, marketplaceContract]);
+
+  const [gridReady, setGridReady] = useState(false);
+  const [allNFTsLoaded, setAllNFTsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (columns) {
+      setGridReady(true);
+    }
+  }, [columns]);
+
+  useEffect(() => {
+    if (loadedNFTs.length > 0 && loadedNFTs.length < itemsPerPage) {
+      setAllNFTsLoaded(true);
+    }
+  }, [loadedNFTs, itemsPerPage]);
+
+  const displayedNFTs = loadedNFTs.slice(0, itemsPerPage);
+  const emptySlots = Math.max(0, itemsPerPage - displayedNFTs.length);
+
   return (
     <Box mt="0px" position="relative" width="100%" minHeight="100vh" overflowX="hidden" overflowY="hidden">
       <Flex direction="column" maxWidth="100vw" pt="20px">
@@ -561,96 +696,65 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
             </Box>
           </Flex>
 
-          <SimpleGrid 
-            columns={columns} 
-            spacing={-2.4}
-            p={2}
-            mx="auto" 
-            mt="-10px"
-            sx={{
-              '& > *': {
-                marginBottom: '1px',
+          {gridReady && (
+            <SimpleGrid 
+              columns={columns} 
+              spacing={-2.4}
+              p={2}
+              mx="auto" 
+              mt="-10px"
+              sx={{
+                '& > *': {
+                  marginBottom: '1px',
+                }
+              }}
+            >
+              {isInitialLoad 
+                ? Array(itemsPerPage).fill(0).map((_, index) => (
+                    <NFTCardSkeleton key={index} />
+                  ))
+                : loadedNFTs.map((nft, index) => (
+                    <NFTCard
+                      key={`${nft.id.toString()}-${index}`}
+                      nft={{
+                        id: nft.id.toString(),
+                        metadata: {
+                          name: nft.metadata?.name || "",
+                          image: nft.metadata?.image || "",
+                        },
+                        owner: nft.owner,
+                        tokenURI: nft.tokenURI,
+                        type: nft.type,
+                      }}
+                      nftContract={nftContract}
+                      account={account}
+                      listingsInSelectedCollection={listingsInSelectedCollection}
+                      convertIpfsToHttp={convertIpfsToHttp}
+                      activeWallet={account}
+                    >
+                      {/* ... existing BuyNowButton ... */}
+                    </NFTCard>
+                  ))
               }
-            }}
-          >
-            {combinedNFTs.length > 0 ? (
-              combinedNFTs.map((item, index) => {
-                const isListing = 'currencyValuePerToken' in item;
-                const nftData = isListing ? item.asset : item;
-                return (
-                  <NFTCard
-                    key={`${nftData.id.toString()}-${index}`}
-                    nft={{
-                      id: nftData.id.toString(),
-                      metadata: {
-                        name: nftData.metadata?.name || "",
-                        image: nftData.metadata?.image || "",
-                      },
-                      owner: nftData.owner,
-                      tokenURI: nftData.tokenURI,
-                      type: nftData.type,
-                    }}
-                    nftContract={nftContract}
-                    account={account}
-                    listingsInSelectedCollection={listingsInSelectedCollection}
-                    convertIpfsToHttp={convertIpfsToHttp}
-                    activeWallet={account}
-                    price={isListing ? item.currencyValuePerToken.displayValue : undefined}
-                    currencySymbol={isListing ? (item.currencyValuePerToken.symbol === "ETH" ? "MELD" : item.currencyValuePerToken.symbol) : undefined}
-                  >
-                    {isListing && account && (
-                      <BuyNowButton
-                        listing={item}
-                        account={account}
-                      />
-                    )}
-                  </NFTCard>
-                );
-              })
-            ) : (
-              <Box mx="auto">No NFTs found.</Box>
-            )}
-          </SimpleGrid>
+              {isLoadingMore && Array(columns).fill(0).map((_, index) => (
+                <NFTCardSkeleton key={`loading-${index}`} />
+              ))}
+            </SimpleGrid>
+          )}
 
-          <Box
-            mx="auto"
-            maxW={{ base: "90vw", lg: "700px" }}
-            mt="-20px" // Increased from 20px to 40px for more space
-            mb="220px" // Added margin bottom for extra space above footer
-            px="10px"
-            py="5px"
-            overflowX="auto"
-          >
-            <Flex direction="row" justifyContent="center" gap="3">
-              <Button
-                onClick={() => setCurrentPageIndex(0)}
-                isDisabled={currentPageIndex === 0}
-              >
-                <MdKeyboardDoubleArrowLeft />
-              </Button>
-              <Button
-                isDisabled={currentPageIndex === 0}
-                onClick={() => setCurrentPageIndex(currentPageIndex - 1)}
-              >
-                <RiArrowLeftSLine />
-              </Button>
-              <Text my="auto">
-                Page {currentPageIndex + 1} of {pages.length}
-              </Text>
-              <Button
-                isDisabled={currentPageIndex === pages.length - 1}
-                onClick={() => setCurrentPageIndex(currentPageIndex + 1)}
-              >
-                <RiArrowRightSLine />
-              </Button>
-              <Button
-                onClick={() => setCurrentPageIndex(pages.length - 1)}
-                isDisabled={currentPageIndex === pages.length - 1}
-              >
-                <MdKeyboardDoubleArrowRight />
-              </Button>
-            </Flex>
-          </Box>
+          {!isInitialLoad && hasMore && (
+            <Box ref={ref} height="20px" mt="20px" mb="40px">
+              {!isLoadingMore && (
+                <Flex
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Spinner size="sm" mr={2} color="white" />
+                  <Text color="white">Load More</Text>
+                </Flex>
+              )}
+            </Box>
+          )}
         </Flex>
       </Box>
     </Box>
