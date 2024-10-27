@@ -295,7 +295,7 @@ export function NFTCard({
                 position="absolute"
                 right="0px"
                 bottom="100%"
-                marginBottom="-5px"
+                marginBottom="0px"
                 overflow="hidden"
                 sx={{
                   '&::before': {

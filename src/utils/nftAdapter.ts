@@ -7,20 +7,30 @@ export interface NFTItem {
     name: string;
     image: string;
   };
-  owner?: string | null;
-  tokenURI?: string;
-  type?: string;
+  owner: string | null;
+  tokenURI: string;
+  type: string;
+  listing?: {
+    createdAt: string | number | Date;
+    // ... other listing properties
+  };
 }
 
-export function adaptNFTToNFTItem(nft: NFT): NFTItem {
+export function adaptNFTToNFTItem(nft: NFT, listings: any[]): NFTItem {
+  const listing = listings.find(l => l.tokenId === nft.id);
+  
   return {
     id: nft.id.toString(),
     metadata: {
-      name: nft.metadata?.name || `NFT #${nft.id}`,
-      image: nft.metadata?.image || '',
+      name: nft.metadata?.name || "",
+      image: nft.metadata?.image || "",
     },
-    owner: nft.owner,
+    owner: nft.owner || null,
     tokenURI: nft.tokenURI,
     type: nft.type,
+    listing: listing ? {
+      createdAt: listing.createdAt,
+      // ... map other listing properties
+    } : undefined,
   };
 }

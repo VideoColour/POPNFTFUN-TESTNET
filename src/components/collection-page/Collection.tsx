@@ -74,12 +74,11 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
     xxxxl: 9,
   }) || 2;
 
-  // Move itemsPerPage declaration here
-  const itemsPerPage = useMemo(() => columns * 4, [columns]);
+  const itemsPerPage = useMemo(() => columns * 4, [columns]); // 4 rows
 
   const startTokenId = supplyInfo?.startTokenId ?? 0n;
   const totalItems: bigint = supplyInfo
-    ? supplyInfo.endTokenId - supplyInfo.startTokenId + 1n
+    ? supplyInfo.endTokenId - supplyInfo.startTokenId
     : 0n;
   console.log("Total Items:", totalItems.toString());
 
@@ -394,11 +393,18 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
     console.log("listingsInSelectedCollection:", listingsInSelectedCollection);
   }, [listingsInSelectedCollection]);
 
+  const [allNFTsLoaded, setAllNFTsLoaded] = useState(false);
+  const [totalNFTs, setTotalNFTs] = useState(0);
+
+  // Calculate the total number of NFTs that can be displayed in the initial grid
+  const initialGridCapacity = useMemo(() => columns * 4, [columns]); // 4 rows
+
   useEffect(() => {
     const fetchNFTs = async () => {
       if (nftContract && supplyInfo) {
-        const totalNFTs = Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId) + 1;
-        const count = Math.min(itemsPerPage, totalNFTs);
+        const total = Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId) + 1;
+        setTotalNFTs(total);
+        const count = Math.min(itemsPerPage, total);
 
         const newNFTs = await (type === "ERC1155" ? getNFTs1155 : getNFTs721)({
           contract: nftContract,
@@ -409,10 +415,11 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
         setLoadedNFTs(newNFTs);
         setIsInitialLoad(false);
 
-        if (newNFTs.length < totalNFTs) {
+        if (newNFTs.length < total) {
           setHasMore(true);
         } else {
           setHasMore(false);
+          setAllNFTsLoaded(true);
         }
       }
     };
@@ -424,17 +431,18 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
 
   useEffect(() => {
     const loadMoreNFTs = async () => {
-      if (!hasMore || !nftContract || !supplyInfo || isLoadingMore) return;
+      if (!hasMore || !nftContract || !supplyInfo || isLoadingMore || allNFTsLoaded) return;
 
       setIsLoadingMore(true);
 
-      const totalNFTs = Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId) + 1;
       const start = loadedNFTs.length;
       const remainingNFTs = totalNFTs - start;
       const count = Math.min(Math.floor(itemsPerPage * 0.75), remainingNFTs);
 
       if (count <= 0) {
         setHasMore(false);
+        setIsLoadingMore(false);
+        setAllNFTsLoaded(true);
         return;
       }
 
@@ -446,6 +454,8 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
 
       if (newNFTs.length === 0) {
         setHasMore(false);
+        setIsLoadingMore(false);
+        setAllNFTsLoaded(true);
         return;
       }
 
@@ -454,13 +464,14 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
 
       if (loadedNFTs.length + newNFTs.length >= totalNFTs) {
         setHasMore(false);
+        setAllNFTsLoaded(true);
       }
     };
 
-    if (!isInitialLoad && inView && hasMore) {
+    if (!isInitialLoad && inView && hasMore && !allNFTsLoaded) {
       loadMoreNFTs();
     }
-  }, [inView, hasMore, loadedNFTs.length, itemsPerPage, type, nftContract, isInitialLoad, supplyInfo, isLoadingMore]);
+  }, [inView, hasMore, loadedNFTs.length, itemsPerPage, type, nftContract, isInitialLoad, supplyInfo, isLoadingMore, allNFTsLoaded, totalNFTs]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -496,7 +507,6 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
   }, [nftContract, type, marketplaceContract]);
 
   const [gridReady, setGridReady] = useState(false);
-  const [allNFTsLoaded, setAllNFTsLoaded] = useState(false);
 
   useEffect(() => {
     if (columns) {
@@ -504,11 +514,37 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
     }
   }, [columns]);
 
+  const [sortedNFTs, setSortedNFTs] = useState<NFTItem[]>([]);
+
   useEffect(() => {
-    if (loadedNFTs.length > 0 && loadedNFTs.length < itemsPerPage) {
-      setAllNFTsLoaded(true);
-    }
-  }, [loadedNFTs, itemsPerPage]);
+    const sortNFTs = () => {
+      const adaptedNFTs = loadedNFTs.map(nft => adaptNFTToNFTItem(nft, listingsInSelectedCollection));
+      
+      const sortedNFTs = adaptedNFTs.sort((a, b) => {
+        // First, sort by listing status
+        if (a.listing && !b.listing) return -1;
+        if (!b.listing && a.listing) return 1;
+
+        // If both are listed, sort by listing time (most recent first)
+        if (a.listing && b.listing) {
+          const aTime = a.listing.createdAt ? new Date(a.listing.createdAt).getTime() : 0;
+          const bTime = b.listing.createdAt ? new Date(b.listing.createdAt).getTime() : 0;
+          return bTime - aTime;
+        }
+
+        // If both are not listed, sort owned NFTs first
+        if (a.owner === account?.address && b.owner !== account?.address) return -1;
+        if (a.owner !== account?.address && b.owner === account?.address) return 1;
+
+        // If ownership is the same, maintain original order
+        return 0;
+      });
+
+      setSortedNFTs(sortedNFTs);
+    };
+
+    sortNFTs();
+  }, [loadedNFTs, listingsInSelectedCollection, account]);
 
   const displayedNFTs = loadedNFTs.slice(0, itemsPerPage);
   const emptySlots = Math.max(0, itemsPerPage - displayedNFTs.length);
@@ -615,7 +651,7 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
                 <Text fontWeight="bold" color="whiteAlpha.700">Items</Text>
                 <Text color="whiteAlpha.900" textAlign="right">
                   {supplyInfo 
-                    ? (Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId) + 1).toLocaleString()
+                    ? (Number(supplyInfo.endTokenId) - Number(supplyInfo.startTokenId)).toLocaleString()
                     : "N/A"}
                 </Text>
 
@@ -713,19 +749,10 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
                 ? Array(itemsPerPage).fill(0).map((_, index) => (
                     <NFTCardSkeleton key={index} />
                   ))
-                : loadedNFTs.map((nft, index) => (
+                : sortedNFTs.map((nft, index) => (
                     <NFTCard
-                      key={`${nft.id.toString()}-${index}`}
-                      nft={{
-                        id: nft.id.toString(),
-                        metadata: {
-                          name: nft.metadata?.name || "",
-                          image: nft.metadata?.image || "",
-                        },
-                        owner: nft.owner,
-                        tokenURI: nft.tokenURI,
-                        type: nft.type,
-                      }}
+                      key={`${nft.id}-${index}`}
+                      nft={nft}
                       nftContract={nftContract}
                       account={account}
                       listingsInSelectedCollection={listingsInSelectedCollection}
@@ -742,7 +769,7 @@ export function Collection({ chainId, contractAddress }: CollectionProps) {
             </SimpleGrid>
           )}
 
-          {!isInitialLoad && hasMore && (
+          {!isInitialLoad && hasMore && !allNFTsLoaded && totalNFTs > itemsPerPage && (
             <Box ref={ref} height="20px" mt="20px" mb="40px">
               {!isLoadingMore && (
                 <Flex
